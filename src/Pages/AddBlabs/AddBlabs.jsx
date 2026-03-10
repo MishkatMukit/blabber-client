@@ -25,7 +25,7 @@ const AddBlubs = () => {
                     background: "#111827",
                     confirmButtonColor: "#3085d6",
                     cancelButtonColor: "#E11D48",
-                    confirmButtonText: "Yes, Logout"
+                    confirmButtonText: "Yes"
                 }).then((result) => {
                     if (result.isConfirmed) {
                         axios.post("http://localhost:3000/blabs", blab).then(res=>console.log(res.data))
@@ -77,10 +77,12 @@ const AddBlubs = () => {
                         </div>
                     </div>
 
+                    
+                </div>
+                <div className='flex gap-2 items-center'>
                     <span className="text-sm opacity-70">
                         {text.length}/{maxChars}
                     </span>
-                </div>
 
                 <button
                     onClick={handleAddBlab}
@@ -89,6 +91,7 @@ const AddBlubs = () => {
                 >
                     Blab
                 </button>
+                </div>
             </div>
 
         </div>

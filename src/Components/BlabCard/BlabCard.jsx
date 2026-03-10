@@ -1,12 +1,14 @@
 
 import { use } from "react";
+import { BiCommentDots } from "react-icons/bi";
 import { FaRegCommentDots } from "react-icons/fa";
+import { LuHeartHandshake } from "react-icons/lu";
 import { PiHandsClapping } from "react-icons/pi";
 
 const BlabCard = ({ allBlabsPromise }) => {
   const blabs = use(allBlabsPromise)
   return (
-    <div>
+    <div className="max-w-4xl mx-auto">
       {
         blabs?.map(blab => (
           <div key={blab._id} className=" max-w-[90%] mx-auto bg-white/8 backdrop-blur-2 p-4 my-4 border border-white/20 shadow-lg rounded-sm transition">
@@ -35,13 +37,13 @@ const BlabCard = ({ allBlabsPromise }) => {
             {/* Actions */}
             <div className="flex items-center gap-6 text-sm opacity-80">
 
-              <button className="flex items-center gap-2 hover:text-secondary transition">
-                <PiHandsClapping size={18} />
+              <button className="flex items-center gap-1 hover:text-primary transition">
+                <LuHeartHandshake size={18}/>
                 {blab.applauseCount}
               </button>
 
-              <button className="flex items-center gap-2 hover:text-secondary transition">
-                <FaRegCommentDots size={16} />
+              <button className="flex items-center gap-1 hover:text-primary transition">
+                <BiCommentDots size={18} />
                 {blab.echoesCount}
               </button>
             </div>
