@@ -1,0 +1,44 @@
+@import "tailwindcss";
+@plugin "daisyui";
+@import url('https://fonts.googleapis.com/css2?family=Gveret+Levin&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  default: true;
+  --color-primary:#E11D48 ;
+  --color-secondary: #403f3f;
+  --color-base-200: #f3f3f3;
+  --color-base-300: #e7e7e7;
+  --color-accent: #706f6f;
+}
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+.font-levin {
+  font-family: "Gveret Levin", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+body{
+  font-family: "Poppins", sans-serif;
+  color: white;
+  font-weight: 400;
+}
+.input:focus,
+.textarea:focus {
+  outline: none !important;
+  background-color: #1f2937 !important;
+  border-color: #E11D48 !important;
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.35);
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: 0 0 0px 1000px #1f2937 inset;
+}
