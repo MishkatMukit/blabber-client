@@ -7,6 +7,7 @@ import lottieRegister from "../../assets/register.json"
 import Lottie from 'lottie-react';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import useAuth from '../../Hooks/useAuth';
+import axios from 'axios';
 const Register = () => {
     const [error, setError] = useState()
     const [eye, setEye] = useState(false)
@@ -57,7 +58,13 @@ const Register = () => {
                 showConfirmButton: false,
                 timer: 1500
             });
+            const userInfo ={ 
+                fb_uid: res.user.uid,
+                email : res.user.email,
+                userName: userName.toLowerCase(),
+            }
             setUser(res.user)
+            axios.post('http://localhost:3000/users', userInfo).then(res=>console.log(res.data))
             //console.log(res.user)
             navigate("/")
         }).catch((error) => {
@@ -90,7 +97,7 @@ const Register = () => {
                             </div> */}
                             <div>
                                 <p className='text-accent'>Email</p>
-                                <input required name='email' className='input w-full rounded-md input-bordered' type="text" placeholder='Enter Email' />
+                                <input required name='email' className='input w-full rounded-md input-bordered' type="email" placeholder='Enter Email' />
                             </div>
                             <div className='relative'>
                                 <p className='text-accent'>Password</p>

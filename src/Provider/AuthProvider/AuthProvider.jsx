@@ -3,10 +3,12 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndP
 import { createContext, useEffect, useState } from "react";
 import { auth } from "../../Firebase/firebase.init";
 import { GoogleAuthProvider } from "firebase/auth";
+import axios from "axios";
 // import axios from "axios";
 export const AuthContext = createContext(null)
 
 const AuthProvider = ({ children }) => {
+    const [dbuser, setDbuser] = useState(null)
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
     const googleProvider = new GoogleAuthProvider();
@@ -28,20 +30,21 @@ const AuthProvider = ({ children }) => {
         return signOut(auth)
     }
     useEffect(() => {
-        const unplug = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
+        const unplug = onAuthStateChanged(auth, async(currentUser) => {
+            if(currentUser){
+                const res = await axios.get(`http://localhost:3000/users/${currentUser.uid}`)
+                setUser(res.data);
+            }
+            else{
+                setUser(null)
+            }
             setLoading(false)
-            // if(currentUser?.email){
-            //     const userData = {email: currentUser.email}
-            //     axios.post("https://career-code-server-three-chi.vercel.app/jwt", userData,{withCredentials: true}).then(res=> console.log(res.data))
-            //     .catch(err=>console.log(err))
-            // }
         })
         return () => {
             unplug();
         }
 
-    }, [user])
+    }, [])
     const authInfo = {
         loading,
         googleProvider,
@@ -50,7 +53,9 @@ const AuthProvider = ({ children }) => {
         logOutUser,
         logInUser,
         user,
-        setUser
+        setUser,
+        dbuser, 
+        setDbuser
     }
 
     return (
