@@ -15,7 +15,7 @@ const Navbar = () => {
     const links = <>
         <li><NavLink to="/">Home</NavLink></li>
         <li><NavLink to="/allBlabs">Blabs</NavLink></li>
-        <li><NavLink title='Add Blubs' to="/addBlubs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li>
+        <li><NavLink title='Add Blubs' to="/addBlabs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li>
         {
             user && <>
 
@@ -117,7 +117,7 @@ const Navbar = () => {
                         </label>
 
                         <ul tabIndex={0} className="  menu dropdown-content bg-white/8 backdrop-blur-2 rounded-box  mt-4 ">
-                            <li><a>Profile <FaRegUserCircle size={18} /></a></li>
+                            <li><Link to="/dashboard">Profile <FaRegUserCircle size={18} /></Link></li>
                             <li>
                                 {
                                     user ? <button onClick={handleLogout}>Logout<FaPowerOff /></button> : <Link to="/login">Login <IoMdLogIn size={20} /></Link>

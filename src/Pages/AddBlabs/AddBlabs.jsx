@@ -3,14 +3,18 @@ import EmojiPicker from 'emoji-picker-react';
 import { useState } from 'react';
 import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import Swal from 'sweetalert2';
+import useAuth from '../../Hooks/useAuth';
 
 const AddBlubs = () => {
+    const {dbUser} = useAuth()
     const [text, setText] = useState("");
     const [showEmoji, setShowEmoji] = useState(false)
     const maxChars = 500;
     const handleAddBlab=()=>{
         const blab = {
-            content : text
+            content : text,
+            authorId : dbUser?.fb_uid,
+            authorUsername : dbUser?.userName,
         }
         Swal.fire({
                     title: "Are you sure?",

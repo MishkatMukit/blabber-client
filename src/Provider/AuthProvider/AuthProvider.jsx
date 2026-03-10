@@ -8,7 +8,7 @@ import axios from "axios";
 export const AuthContext = createContext(null)
 
 const AuthProvider = ({ children }) => {
-    const [dbuser, setDbuser] = useState(null)
+    const [dbUser, setDbuser] = useState(null)
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
     const googleProvider = new GoogleAuthProvider();
@@ -31,12 +31,13 @@ const AuthProvider = ({ children }) => {
     }
     useEffect(() => {
         const unplug = onAuthStateChanged(auth, async(currentUser) => {
+            setUser(currentUser)
             if(currentUser){
                 const res = await axios.get(`http://localhost:3000/users/${currentUser.uid}`)
-                setUser(res.data);
+                setDbuser(res.data);
             }
             else{
-                setUser(null)
+                setDbuser(null)
             }
             setLoading(false)
         })
@@ -54,7 +55,7 @@ const AuthProvider = ({ children }) => {
         logInUser,
         user,
         setUser,
-        dbuser, 
+        dbUser, 
         setDbuser
     }
 

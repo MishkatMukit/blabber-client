@@ -19,10 +19,10 @@ const Banner = () => {
                     </p>
 
                     <div className="flex flex-col items-center sm:flex-row gap-4 md:justify-start justify-center">
-                        <button className="btn btn-primary px-8">
+                        <Link to="/addBlabs" className="btn btn-primary px-8">
                             Start Blabbering
-                        </button>
-                        <Link to="/blabs" className='btn btn-outline hover:bg-transparent hover:border-primary border-2 shadow-none hover:text-primary'>Browse Blabs</Link>
+                        </Link>
+                        <Link to="/allBlabs" className='btn btn-outline hover:bg-transparent hover:border-primary border-2 shadow-none hover:text-primary'>Browse Blabs</Link>
                         
                     </div>
                 </div>
