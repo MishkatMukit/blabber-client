@@ -12,7 +12,7 @@ const BlabSkeleton = () => {
           circle
           width={40}
           height={40}
-          baseColor="#1F2128"
+          baseColor="#4E4F5450"
           highlightColor="#2C2F36"
         />
 
@@ -20,13 +20,13 @@ const BlabSkeleton = () => {
           <Skeleton
             width={120}
             height={14}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
           <Skeleton
             width={90}
             height={10}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
         </div>
@@ -38,7 +38,7 @@ const BlabSkeleton = () => {
         <Skeleton
           count={1}
           height={16}
-          baseColor="#1F2128"
+          baseColor="#4E4F5450"
           highlightColor="#2C2F36"
         />
       </div>
@@ -50,13 +50,13 @@ const BlabSkeleton = () => {
           <Skeleton
             width={18}
             height={18}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
           <Skeleton
             width={20}
             height={12}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
         </div>
@@ -65,13 +65,13 @@ const BlabSkeleton = () => {
           <Skeleton
             width={18}
             height={18}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
           <Skeleton
             width={20}
             height={12}
-            baseColor="#1F2128"
+            baseColor="#4E4F5450"
             highlightColor="#2C2F36"
           />
         </div>
