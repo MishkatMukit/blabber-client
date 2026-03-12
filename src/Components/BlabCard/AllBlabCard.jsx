@@ -1,11 +1,10 @@
-
 import { use } from "react";
 import { BiCommentDots } from "react-icons/bi";
 import { FaRegCommentDots } from "react-icons/fa";
 import { LuHeartHandshake } from "react-icons/lu";
-import { PiHandsClapping } from "react-icons/pi";
 
-const BlabCard = ({ allBlabsPromise }) => {
+
+const AllBlabCard = ({ allBlabsPromise }) => {
   const blabs = use(allBlabsPromise)
   return (
     <div className="max-w-4xl mx-auto">
@@ -54,4 +53,4 @@ const BlabCard = ({ allBlabsPromise }) => {
   );
 };
 
-export default BlabCard;
+export default AllBlabCard;

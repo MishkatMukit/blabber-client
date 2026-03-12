@@ -32,14 +32,16 @@ const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unplug = onAuthStateChanged(auth, async(currentUser) => {
             setUser(currentUser)
-            if(currentUser){
-                const res = await axios.get(`http://localhost:3000/users/${currentUser.uid}`)
-                setDbuser(res.data);
-            }
-            else{
+            if(!currentUser){
                 setDbuser(null)
+                setLoading(false)
+                return
+                
             }
+            const res = await axios.get(`http://localhost:3000/users/${currentUser.uid}`)
+            setDbuser(res.data);
             setLoading(false)
+            
         })
         return () => {
             unplug();

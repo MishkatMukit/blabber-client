@@ -7,6 +7,7 @@ import { IoEyeOutline } from 'react-icons/io5';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 const Login = () => {
     const [error, setError] = useState("");
     const { logInUser, setUser, googleLogin } = use(AuthContext)
@@ -16,8 +17,14 @@ const Login = () => {
 
     const handleGoogleSignIn = () => {
         googleLogin()
-            .then((result) => {
-                setUser(result.user);
+            .then((res) => {
+                const userInfo ={ 
+                fb_uid: res.user.uid,
+                email : res.user.email,
+                userName: res.user.displayName?.toLowerCase().replace(/\s+/g, "_"),
+            }
+                axios.post('http://localhost:3000/users', userInfo).then(res=>console.log(res.data))
+                setUser(res.user);
                 navigate(location.state ? location.state : "/")
             })
             .catch((error) => {
@@ -55,7 +62,7 @@ const Login = () => {
     return (
         <div>
             <div>
-            <div className='flex justify-center items-center mt-5 py-16'>
+            <div className='flex justify-center items-center  py-20'>
                 <div>
                     <Lottie className='w-sm' animationData={lottieLogin} loop={false}></Lottie>
                 </div>
@@ -83,7 +90,7 @@ const Login = () => {
                         <div className="divider">OR</div>
                         <button onClick={handleGoogleSignIn} className="btn bg-base-200 text-black border-[#e5e5e5]">
                             <FcGoogle />
-                            Login with Google
+                            Continue with Google
                         </button>
                     </div>
                 </div>

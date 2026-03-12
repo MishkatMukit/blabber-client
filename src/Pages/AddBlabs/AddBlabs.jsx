@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import useAuth from '../../Hooks/useAuth';
 
 const AddBlubs = () => {
-    const {dbUser} = useAuth()
+    const {dbUser, setDbUser} = useAuth()
     const [text, setText] = useState("");
     const [showEmoji, setShowEmoji] = useState(false)
     const maxChars = 500;
@@ -28,7 +28,7 @@ const AddBlubs = () => {
                     confirmButtonText: "Yes"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        axios.post("http://localhost:3000/blabs", blab).then(res=>console.log(res.data))
+                        axios.post("http://localhost:3000/blabs", blab).then(()=>{})
                         setText('')
                         Swal.fire({
                             title: "Posted!",

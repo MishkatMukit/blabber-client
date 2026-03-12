@@ -1,8 +1,14 @@
 import { FaPen } from "react-icons/fa";
 import useAuth from "../../Hooks/useAuth";
+import MyBlabs from "../../Components/DashboardComponents/MyBlabs";
+import { Suspense } from "react";
+import Loading from "../../Components/Loader/Loading"
+import useMyBlabsAPI from "../../API/UseMyBlabsAPI";
 
-const Dashboard= () => {
-    const {dbUser} = useAuth()
+const Dashboard = () => {
+  const { dbUser, user } = useAuth()
+  const myBlabsPromise = useMyBlabsAPI()
+  console.log(myBlabsPromise);
   return (
     <div className="max-w-3xl mx-auto px-4 pt-24 space-y-6 ">
 
@@ -61,14 +67,14 @@ const Dashboard= () => {
         {/* Stats */}
         <div className="flex gap-10 mt-6 border-t border-white/20 pt-4">
 
-          <div>
+          {/* <div>
             <p className="text-xl font-semibold">
               {dbUser?.blabsCount}
             </p>
             <p className="text-xs opacity-60">
               Blabs
             </p>
-          </div>
+          </div> */}
 
         </div>
 
@@ -80,7 +86,11 @@ const Dashboard= () => {
         <h3 className="text-lg font-semibold mb-4 tracking-wide">
           Your Blabs
         </h3>
-
+        <Suspense fallback={<Loading />}>
+          {user?.uid && (
+            <MyBlabs myBlabsPromise={myBlabsPromise(user.uid)} />
+          )}
+        </Suspense>
         {/* Map blabs here */}
         {/* <BlabCard /> */}
 
