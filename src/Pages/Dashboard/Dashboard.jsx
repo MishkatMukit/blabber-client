@@ -1,14 +1,16 @@
 import { FaPen } from "react-icons/fa";
 import useAuth from "../../Hooks/useAuth";
-import MyBlabs from "../../Components/DashboardComponents/MyBlabs";
 import { Suspense } from "react";
+import MyBlabs from "../../Components/DashboardComponents/MyBlabs"
 import Loading from "../../Components/Loader/Loading"
 import useMyBlabsAPI from "../../API/UseMyBlabsAPI";
-
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
+import BlabSkeleton from "../../Components/Shared/Skeleton/BlabSkeleton";
 const Dashboard = () => {
   const { dbUser, user } = useAuth()
-  const myBlabsPromise = useMyBlabsAPI()
-  console.log(myBlabsPromise);
+  const {data: myBlabs=[], isLoading} = useMyBlabsAPI()
+  // console.log(myBlabsPromise);
   return (
     <div className="max-w-3xl mx-auto px-4 pt-24 space-y-6 ">
 
@@ -86,11 +88,28 @@ const Dashboard = () => {
         <h3 className="text-lg font-semibold mb-4 tracking-wide">
           Your Blabs
         </h3>
-        <Suspense fallback={<Loading />}>
+        {
+          isLoading ? (
+            <div>
+               {Array.from({ length: 2 }).map((_, i) => (
+              <BlabSkeleton key={i} />
+            ))}
+            </div>
+          ) : (
+            <MyBlabs myBlabs={myBlabs}></MyBlabs>
+          )
+        }
+        {/* <Suspense fallback={
+          <div>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <BlabSkeleton key={i} />
+            ))}
+          </div>
+        }>
           {user?.uid && (
             <MyBlabs myBlabsPromise={myBlabsPromise(user.uid)} />
           )}
-        </Suspense>
+        </Suspense> */}
         {/* Map blabs here */}
         {/* <BlabCard /> */}
 

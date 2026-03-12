@@ -7,17 +7,18 @@ const axiosInstance = axios.create({
 })
 
 const useAxiosSecure = () => {
-    const {user, logOutUser } = useAuth()
+    const { user, logOutUser } = useAuth()
     const navigate = useNavigate()
-     
-    axiosInstance.interceptors.request.use(config=>{
-        config.headers.authorization =  `Bearer ${user.accessToken}`
+
+    axiosInstance.interceptors.request.use(config => {
+        config.headers.authorization = `Bearer ${user?.accessToken}`
         return config
     })
     axiosInstance.interceptors.response.use(
         res => res,
         err => {
             const status = err?.response?.status;
+
             if (status === 401 || status === 403) {
                 logOutUser()
                     .then(() => {

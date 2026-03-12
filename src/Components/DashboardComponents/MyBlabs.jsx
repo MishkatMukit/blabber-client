@@ -1,9 +1,9 @@
 import React, { use } from 'react';
 import { LuHeartHandshake } from 'react-icons/lu';
 import { BiCommentDots } from 'react-icons/bi';
-const MyBlabs = ({myBlabsPromise}) => {
-    const myBlabs = use(myBlabsPromise)
-    console.log(myBlabs);
+const MyBlabs = ({myBlabs}) => {
+    // const myBlabs = use(myBlabsPromise)
+    // console.log(myBlabs);
     return (
         <div>
             {

@@ -1,15 +1,14 @@
-import { use } from "react";
 import { BiCommentDots } from "react-icons/bi";
 import { FaRegCommentDots } from "react-icons/fa";
 import { LuHeartHandshake } from "react-icons/lu";
 
 
-const AllBlabCard = ({ allBlabsPromise }) => {
-  const blabs = use(allBlabsPromise)
+const AllBlabCard = ({ allBlabs }) => {
+  // const blabs = use(allBlabsPromise)
   return (
     <div className="max-w-4xl mx-auto">
       {
-        blabs?.map(blab => (
+        allBlabs?.map(blab => (
           <div key={blab._id} className=" max-w-[90%] mx-auto bg-white/8 backdrop-blur-2 p-4 my-4 border border-white/20 shadow-lg rounded-sm transition">
 
             {/* Author */}
