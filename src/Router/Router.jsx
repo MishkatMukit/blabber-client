@@ -7,8 +7,8 @@ import Register from "../Components/AuthComponents/Register";
 import AddBlabs from "../Pages/AddBlabs/AddBlabs"
 import PrivateRoute from "../Routes/PrivateRoute";
 import AllBlubs from "../Pages/AllBlabs/AllBlabs";
-import Loading from "../Components/Loader/Loading";
 import Dashboard from "../Pages/Dashboard/Dashboard";
+import BlabDetails from "../Pages/BlabDetails/BlabDetails";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -29,7 +29,11 @@ const router = createBrowserRouter([
             {
                 path: "/allBlabs",
                 element: <AllBlubs></AllBlubs>
-            
+
+            },
+            {
+                path: "/blabdetails/:id",
+                element: <PrivateRoute><BlabDetails></BlabDetails></PrivateRoute>
             },
             {
                 path: "/addBlabs",

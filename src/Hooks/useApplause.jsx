@@ -14,15 +14,14 @@ const useApplause = () => {
     },
 
     onMutate: async (blabId) => {
-      await queryClient.cancelQueries({ queryKey: ["allBlabs"] });
+      await queryClient.cancelQueries();
+      const previousAllBlabs = queryClient.getQueryData(["allBlabs"]);
+      const previousMyBlabs = queryClient.getQueryData(["myBlabs"]);
 
-      const previousBlabs = queryClient.getQueryData(["allBlabs"]);
-
-      queryClient.setQueryData(["allBlabs"], (oldBlabs) => {
+      const updateBlabs = ((oldBlabs) => {
         return oldBlabs?.map((blab) => {
           if (blab._id === blabId) {
             const alreadyApplauded = blab.applause?.includes(user.uid);
-
             return {
               ...blab,
               applauseCount: alreadyApplauded
@@ -33,21 +32,21 @@ const useApplause = () => {
                 : [...blab.applause, user.uid],
             };
           }
-
           return blab;
         });
       });
-
-      return { previousBlabs };
+      queryClient.setQueryData(["allBlabs"], updateBlabs)
+      queryClient.setQueryData(["myBlabs", user?.uid], updateBlabs)
+      return { previousAllBlabs, previousMyBlabs };
     },
-
     onError: (err, blabId, context) => {
-      queryClient.setQueryData(["allBlabs"], context.previousBlabs);
+      queryClient.setQueryData(["allBlabs"], context.previousAllBlabs);
+      queryClient.setQueryData(["myBlabs", user?.uid], context.previousMyBlabs);
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
-      queryClient.invalidateQueries({ queryKey: ["myBlabs"] });
+      queryClient.invalidateQueries({ queryKey: ["myBlabs", user?.uid] });
     },
   });
 };

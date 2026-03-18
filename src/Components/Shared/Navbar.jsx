@@ -6,12 +6,13 @@ import useAuth from '../../Hooks/useAuth';
 import { IoIosAdd, IoMdLogIn } from 'react-icons/io';
 import { FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { useQueryClient } from '@tanstack/react-query';
 const Navbar = () => {
     const { user, logOutUser } = useAuth()
     const [visible, setVisible] = useState(true);
     const lastScrollY = useRef(0);
     const ticking = useRef(false);
-
+    const queryClient = useQueryClient()
     const links = <>
         <li><NavLink to="/">Home</NavLink></li>
         <li><NavLink to="/allBlabs">Blabs</NavLink></li>
@@ -60,9 +61,10 @@ const Navbar = () => {
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#E11D48",
             confirmButtonText: "Yes, Logout"
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                logOutUser().then(res => console.log(res))
+                await logOutUser().then(res => console.log(res))
+                queryClient.clear();
                 Swal.fire({
                     title: "Logged out",
                     text: "Successfully Logged out from Blabber!",
@@ -75,9 +77,8 @@ const Navbar = () => {
 
     }
     return (
-        <div className={` fixed  w-full top-0 z-50 transition-transform duration-300 ${
-        visible ? "translate-y-0" : "-translate-y-full"
-      }`}>
+        <div className={` fixed  w-full top-0 z-50 transition-transform duration-300 ${visible ? "translate-y-0" : "-translate-y-full"
+            }`}>
             <div className="navbar max-w-[95%] mx-auto bg-white/8 backdrop-blur-2   border border-t-0 border-white/20 shadow-lg rounded-sm">
                 <div className="navbar-start">
                     <div className="dropdown">
