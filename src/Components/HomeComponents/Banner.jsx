@@ -4,31 +4,30 @@ import { Link } from 'react-router';
 
 const Banner = () => {
     return (
-        <section className="min-h-[70vh] flex items-center px-6 py-16">
-            <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+        <section className="min-h-[70vh] flex items-center px-4 md:px-6 py-12 md:py-16">
+            <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
 
                 {/* LEFT SIDE */}
-                <div className=" font-soratext-center md:text-left">
-                    <h1 className=" text-4xl md:text-6xl font-jersey tracking-wide mb-6">
+                <div className="text-center md:text-left">
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-jersey tracking-wide mb-4 md:mb-6">
                         Blabber
                     </h1>
 
-                    <p className="text-lg md:text-xl text-base-content/70 mb-8 max-w-lg">
+                    <p className="text-base md:text-xl text-base-content/70 mb-6 md:mb-8 max-w-lg mx-auto md:mx-0">
                         Less lurking, more talking.
                         Share thoughts, join conversations, and build communities.
                     </p>
 
                     <div className="flex flex-col items-center sm:flex-row gap-4 md:justify-start justify-center">
-                        <Link to="/addBlabs" className="btn btn-primary px-8">
+                        <Link to="/allBlabs" className="btn btn-primary px-8">
                             Start Blabbering
                         </Link>
-                        <Link to="/allBlabs" className='btn btn-outline hover:bg-transparent hover:border-primary border-2 shadow-none hover:text-primary'>Browse Blabs</Link>
-                        
+
                     </div>
                 </div>
 
                 {/* RIGHT SIDE – FEED PREVIEW */}
-                <div className="relative w-full max-w-xl mx-auto">
+                <div className="relative w-full max-w-xl mx-auto overflow-hidden">
 
                     {/* Post 1 */}
                     <motion.div animate={{ x: [20, 0, 20] }}

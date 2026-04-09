@@ -5,6 +5,7 @@ import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import Swal from 'sweetalert2';
 import useAuth from '../../Hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
+import axiosPublic from '../../Hooks/useAxiosPublic';
 
 const AddBlubs = () => {
     const { dbUser, setDbUser } = useAuth()
@@ -12,6 +13,7 @@ const AddBlubs = () => {
     const [showEmoji, setShowEmoji] = useState(false)
     const maxChars = 500;
     const queryClient = useQueryClient()
+
     const handleAddBlab = () => {
         const blab = {
             content: text,
@@ -30,22 +32,23 @@ const AddBlubs = () => {
             confirmButtonText: "Yes"
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.post("http://localhost:3000/blabs", blab).then(() => { })
-                queryClient.invalidateQueries({ queryKey: ["allBlabs"] })
-                queryClient.invalidateQueries({ queryKey: ["myBlabs"] })
-                setText('')
-                Swal.fire({
-                    title: "Posted!",
-                    text: "Successfully posted your blab!",
-                    icon: "success",
-                    background: "#111827",
-                    color: "white"
-                });
+                axiosPublic.post("/blabs", blab).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ["allBlabs"] })
+                    queryClient.invalidateQueries({ queryKey: ["myBlabs"] })
+                    setText('')
+                    Swal.fire({
+                        title: "Posted!",
+                        text: "Successfully posted your blab!",
+                        icon: "success",
+                        background: "#111827",
+                        color: "white"
+                    });
+                })
             }
         });
     }
     return (
-        <div className="p-4 rounded-xl space-y-3 my-2 max-w-3xl mx-auto relative pt-20">
+        <div className="p-2 md:p-4 rounded-xl space-y-3 my-2 max-w-3xl mx-auto relative">
 
             <textarea
                 className="textarea textarea-bordered w-full resize-none"
@@ -72,7 +75,8 @@ const AddBlubs = () => {
                             {
                                 showEmoji && <EmojiPicker
                                     theme="dark"
-                                    height={400}
+                                    height={350}
+                                    width={280}
                                     searchDisabled
                                     skinTonesDisabled
                                     onEmojiClick={emoji => setText(prev => prev + emoji.emoji)}
@@ -84,13 +88,13 @@ const AddBlubs = () => {
 
                 </div>
                 <div className='flex gap-2 items-center'>
-                    <span className="text-sm opacity-70">
+                    <span className="text-xs opacity-70">
                         {text.length}/{maxChars}
                     </span>
 
                     <button
                         onClick={handleAddBlab}
-                        className="btn btn-primary"
+                        className="btn btn-sm btn-primary"
                         disabled={!text.trim()}
                     >
                         Blab

@@ -7,12 +7,14 @@ import lottieRegister from "../../assets/register.json"
 import Lottie from 'lottie-react';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import useAuth from '../../Hooks/useAuth';
-import axios from 'axios';
+import axiosPublic from '../../Hooks/useAxiosPublic';
+import useRegisterValidation from '../../Hooks/useRegisterValidation';
 const Register = () => {
-    const [error, setError] = useState()
     const [eye, setEye] = useState(false)
     const [conEye, setConEye] = useState(false)
     const { registerUser, user, setUser } = useAuth()
+    const { error, setError, validateForm } = useRegisterValidation()
+
     const navigate = useNavigate()
     const handleRegister = (e) => {
         e.preventDefault()
@@ -24,33 +26,11 @@ const Register = () => {
         const password = formData.get("password");
         const confirmPassword = formData.get("confirmPassword");
 
-        const hasUppercase = /[A-Z]/;
-        const hasLowercase = /[a-z]/;
-        const hasMinLength = /.{6,}/;
-        const isUnique =  /^(?!.*__)[a-zA-Z0-9](?:[a-zA-Z0-9_]{1,18}[a-zA-Z0-9])?$/
-        if(!isUnique.test(userName)){
-            setError("Username must be unique")
+        if (!validateForm(userName, password, confirmPassword)) {
             return
         }
-        if (!hasMinLength.test(password)) {
-            setError("Password must be at least 6 characters")
-            return
-        }
-        if (!hasLowercase.test(password)) {
-            setError("Password must have atleast one lowercase letter")
-            return
-        }
-        if (!hasUppercase.test(password)) {
-            setError("Password must have atleast one uppercase letter")
-            return
-        }
-        if (password !== confirmPassword) {
-            setError("Confirm Password not matched")
-            return
-        }
-        setError("")
+
         registerUser(email, password).then((res) => {
-            //console.log(res);
             Swal.fire({
                 position: "center",
                 icon: "success",
@@ -58,28 +38,28 @@ const Register = () => {
                 showConfirmButton: false,
                 timer: 1500
             });
-            const userInfo ={ 
+            const userInfo = {
+                photo: `https://api.dicebear.com/7.x/initials/svg?seed=${userName}`,
                 fb_uid: res.user.uid,
-                email : res.user.email,
+                email: res.user.email,
                 userName: userName.toLowerCase(),
             }
-            setUser(res.user)
-            axios.post('http://localhost:3000/users', userInfo).then(res=>console.log(res.data))
-            //console.log(res.user)
-            navigate("/")
+            axiosPublic.post('/users', userInfo).then(res => {
+                // console.log(res.data)
+                navigate("/")
+            })
         }).catch((error) => {
-            // console.error(error);
             setError(error.message || "Registration failed");
         });
 
     }
     return (
         <div>
-            <div className='flex justify-center items-end mt-5 py-16'>
-                <div>
+            <div className='flex justify-center items-center pt-16 pb-10 min-h-screen px-4 md:px-0'>
+                <div className='hidden md:flex'>
                     <Lottie className="w-sm" animationData={lottieRegister} loop={true}></Lottie>
                 </div>
-                <div className="card bg-base-100 w-87.5 md:w-lg shrink-0 shadow-lg">
+                <div className="card bg-base-100 w-full max-w-sm md:w-lg shrink-0 shadow-lg">
                     <div className="card-body">
                         <h1 className='text-3xl font-bold text-center'>Please Register</h1>
                         <form onSubmit={handleRegister} className='space-y-3' >

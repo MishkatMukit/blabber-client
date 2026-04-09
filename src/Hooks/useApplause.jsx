@@ -2,10 +2,28 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosSecure from "./useAxiosSecure";
 import useAuth from "./useAuth";
 
-const useApplause = () => {
+const useApplause = (page) => {
   const queryClient = useQueryClient();
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
+
+  const toggleApplause = (blab, userId) => {
+    if (!blab) return blab;
+
+    const alreadyApplauded = blab.applause?.includes(userId);
+
+    const updatedApplause = alreadyApplauded
+      ? blab.applause.filter((id) => id !== userId)
+      : [...blab.applause, userId];
+
+    return {
+      ...blab,
+      applause: updatedApplause,
+      applauseCount: alreadyApplauded
+        ? Math.max((blab.applauseCount || 1) - 1, 0)
+        : (blab.applauseCount || 0) + 1,
+    };
+  };
 
   return useMutation({
     mutationFn: async (blabId) => {
@@ -14,39 +32,67 @@ const useApplause = () => {
     },
 
     onMutate: async (blabId) => {
-      await queryClient.cancelQueries();
-      const previousAllBlabs = queryClient.getQueryData(["allBlabs"]);
-      const previousMyBlabs = queryClient.getQueryData(["myBlabs"]);
+      await queryClient.cancelQueries({ queryKey: ["allBlabs", page] });
+      await queryClient.cancelQueries({ queryKey: ["myBlabs", user?.uid] });
+      await queryClient.cancelQueries({ queryKey: ["blab", blabId] });
 
-      const updateBlabs = ((oldBlabs) => {
-        return oldBlabs?.map((blab) => {
-          if (blab._id === blabId) {
-            const alreadyApplauded = blab.applause?.includes(user.uid);
-            return {
-              ...blab,
-              applauseCount: alreadyApplauded
-                ? blab.applauseCount - 1
-                : blab.applauseCount + 1,
-              applause: alreadyApplauded
-                ? blab.applause.filter((id) => id !== user.uid)
-                : [...blab.applause, user.uid],
-            };
-          }
-          return blab;
-        });
-      });
-      queryClient.setQueryData(["allBlabs"], updateBlabs)
-      queryClient.setQueryData(["myBlabs", user?.uid], updateBlabs)
-      return { previousAllBlabs, previousMyBlabs };
+      const previousAllBlabs = queryClient.getQueryData(["allBlabs", page]);
+      const previousMyBlabs = queryClient.getQueryData(["myBlabs", user?.uid]);
+      const previousBlabById = queryClient.getQueryData(["blab", blabId]);
+
+      // update blab array (cache shape is { data: [...], totalPages: N })
+      const updateBlabs = (oldBlabs) => {
+        if (!oldBlabs) return oldBlabs;
+
+        // 🔥 CASE 1: paginated (allBlabs)
+        if (oldBlabs.data) {
+          return {
+            ...oldBlabs,
+            data: oldBlabs.data.map((blab) =>
+              blab._id === blabId
+                ? toggleApplause(blab, user.uid)
+                : blab
+            ),
+          };
+        }
+
+        // 🔥 CASE 2: non-paginated (myBlabs)
+        if (Array.isArray(oldBlabs)) {
+          return oldBlabs.map((blab) =>
+            blab._id === blabId
+              ? toggleApplause(blab, user.uid)
+              : blab
+          );
+        }
+
+        return oldBlabs;
+      };
+
+      queryClient.setQueryData(["allBlabs", page], updateBlabs);
+      queryClient.setQueryData(["myBlabs", user?.uid], updateBlabs);
+
+      // update single blab
+      queryClient.setQueryData(["blab", blabId], (oldBlab) =>
+        toggleApplause(oldBlab, user.uid)
+      );
+
+      return {
+        previousAllBlabs,
+        previousMyBlabs,
+        previousBlabById,
+      };
     },
+
     onError: (err, blabId, context) => {
-      queryClient.setQueryData(["allBlabs"], context.previousAllBlabs);
+      queryClient.setQueryData(["allBlabs", page], context.previousAllBlabs);
       queryClient.setQueryData(["myBlabs", user?.uid], context.previousMyBlabs);
+      queryClient.setQueryData(["blab", blabId], context.previousBlabById);
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
+    onSettled: (data, error, blabId) => {
+      queryClient.invalidateQueries({ queryKey: ["allBlabs", page] });
       queryClient.invalidateQueries({ queryKey: ["myBlabs", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["blab", blabId] });
     },
   });
 };

@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 
-const useBlabById = (id) => {
+const useEchoesAPI = (id) => {
     const axiosSecure = useAxiosSecure();
     const query = useQuery({
-        queryKey: ["blab", id],
-        enabled: !!id,
+        queryKey: ["echoes", id],
         queryFn: async () => {
-            const res = await axiosSecure.get(`/blabdetails/${id}`);
+            const res = await axiosSecure.get(`/blab/echoes/${id}`);
             return res.data;
         },
-        staleTime: 1000 * 60 * 5
+
+
     });
     return query;
 };
 
-export default useBlabById;
+export default useEchoesAPI;

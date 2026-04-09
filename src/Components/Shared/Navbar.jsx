@@ -4,24 +4,20 @@ import { RiUserSmileFill } from 'react-icons/ri';
 import { Link, NavLink } from 'react-router';
 import useAuth from '../../Hooks/useAuth';
 import { IoIosAdd, IoMdLogIn } from 'react-icons/io';
-import { FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
+import { FaBars, FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 const Navbar = () => {
-    const { user, logOutUser } = useAuth()
+    const { user, dbUser, logOutUser } = useAuth()
     const [visible, setVisible] = useState(true);
     const lastScrollY = useRef(0);
     const ticking = useRef(false);
     const queryClient = useQueryClient()
     const links = <>
-        <li><NavLink to="/">Home</NavLink></li>
-        <li><NavLink to="/allBlabs">Blabs</NavLink></li>
-        <li><NavLink title='Add Blubs' to="/addBlabs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li>
-        {
-            user && <>
+        <li className='font-light  p-1' ><NavLink to="/">Home</NavLink></li>
+        <li className='font-light  p-1'><NavLink to="/allBlabs">Blabs</NavLink></li>
+        {/* <li><NavLink title='Add Blubs' to="/addBlabs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li> */}
 
-            </>
-        }
     </>
     useEffect(() => {
         const updateScroll = () => {
@@ -63,7 +59,9 @@ const Navbar = () => {
             confirmButtonText: "Yes, Logout"
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await logOutUser().then(res => console.log(res))
+                await logOutUser().then(res =>
+                    console.log("logged out sucessfully!")
+                )
                 queryClient.clear();
                 Swal.fire({
                     title: "Logged out",
@@ -81,22 +79,12 @@ const Navbar = () => {
             }`}>
             <div className="navbar max-w-[95%] mx-auto bg-white/8 backdrop-blur-2   border border-t-0 border-white/20 shadow-lg rounded-sm">
                 <div className="navbar-start">
-                    <div className="dropdown">
-                        <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /> </svg>
-                        </div>
-
-                        <ul
-                            tabIndex="-1"
-                            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-
-                            {
-                                links
-                            }
-
-                        </ul>
-                    </div>
-                    <Link to="/" className="pl-2 text-xl font-levin text-primary">Blabber</Link>
+                    <Link to="/allBlabs" className="md:pl-2 text-xl font-levin text-primary">Blabber</Link>
+                    <ul className="flex gap-4 px-4 lg:hidden">
+                        {
+                            links
+                        }
+                    </ul>
                 </div>
 
                 <div className="navbar-end dropdown dropdown-bottom">
@@ -110,9 +98,13 @@ const Navbar = () => {
                     <div className="dropdown dropdown-end">
                         <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
                             <div className="w-10 rounded-full">
-                                <img
-                                    alt="Tailwind CSS Navbar component"
-                                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                                {
+                                    dbUser ? <img
+                                        alt="Tailwind CSS Navbar component"
+                                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}`} /> : <img
+                                        alt="Tailwind CSS Navbar component"
+                                        src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                                }
 
                             </div>
                         </label>

@@ -4,7 +4,8 @@ import useAuth from "./useAuth";
 import { useNavigate } from "react-router";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "https://blabber-server.vercel.app/",
+  // baseURL:"http://localhost:3000"
 });
 
 const useAxiosSecure = () => {
