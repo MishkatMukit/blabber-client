@@ -1,6 +1,7 @@
 import { FaPen } from "react-icons/fa";
 import useAuth from "../../Hooks/useAuth";
 import { Suspense, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import MyBlabs from "../../Components/DashboardComponents/MyBlabs"
 import Loading from "../../Components/Loader/Loading"
 import useMyBlabsAPI from "../../API/UseMyBlabsAPI";
@@ -12,13 +13,13 @@ import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import { useQueryClient } from "@tanstack/react-query";
 const Dashboard = () => {
   const [showEditBio, setShowEditBio] = useState(false)
-  const [editedBio, setEditedBio] = useState("")
   const { dbUser, user } = useAuth()
+  const [editedBio, setEditedBio] = useState(dbUser?.bio || "")
   const { data: myBlabs = [], isLoading } = useMyBlabsAPI()
   const queryClient = useQueryClient()
   const axiosSecure = useAxiosSecure()
   const handleEditBio = async () => {
-    axiosSecure.post(`/users/updateBio/${dbUser.fb_uid}`, { bio: editedBio })
+    axiosSecure.patch(`/users/updateBio/${dbUser.fb_uid}`, { bio: editedBio })
       .then(res => {
         queryClient.invalidateQueries({ queryKey: ["dbUser"] })
         console.log(res.data)
@@ -29,7 +30,12 @@ const Dashboard = () => {
   return (
     <div className="max-w-[95%] md:max-w-3xl mx-auto px-2 md:px-4 pt-20 md:pt-24 pb-10 space-y-6">
       <Helmet><title>Blabber-Dashboard</title></Helmet>
-      <div className="bg-white/10 backdrop-blur-2 border border-white/20 rounded-2xl p-4 md:p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="bg-white/10 backdrop-blur-2 border border-white/20 rounded-2xl p-4 md:p-6"
+      >
 
         <div className="flex items-center gap-4 md:gap-6">
           <div className="avatar ">
@@ -50,15 +56,28 @@ const Dashboard = () => {
               {dbUser?.email}
             </p>
             <div className="flex items-center gap-2">
-              {dbUser?.bio ? (
-                <p className="mt-2 text-xs md:text-sm">
-                  {dbUser?.bio}
-                </p>
-              ) : (
-                <p className="mt-2 text-xs md:text-sm opacity-50 italic">
-                  No bio yet
-                </p>
-              )}
+              <AnimatePresence initial={false} mode="wait">
+                {dbUser?.bio ? (
+                  <motion.p
+                    key={dbUser.bio}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-2 text-xs md:text-sm"
+                  >
+                    {dbUser?.bio}
+                  </motion.p>
+                ) : (
+                  <motion.p
+                    key="no-bio"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    className="mt-2 text-xs md:text-sm italic"
+                  >
+                    No bio yet
+                  </motion.p>
+                )}
+              </AnimatePresence>
               <button onClick={() => setShowEditBio(!showEditBio)} className="bg-primary rounded-xs text-white p-1 mt-2">
                 <FaPen size={8} />
               </button>
@@ -81,16 +100,31 @@ const Dashboard = () => {
             </p>
           </div> */}
         </div>
-        {
-          showEditBio && <div className="mt-2">
-            <textarea rows={2} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedBio" defaultValue={dbUser?.bio} onChange={(e) => setEditedBio(e.target.value)} id="" />
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => handleEditBio(dbUser.fb_uid)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Save</button>
-              <button onClick={() => setShowEditBio(!showEditBio)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Cancel</button>
-            </div>
-          </div>
-        }
-      </div>
+        <AnimatePresence>
+          {showEditBio && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{ overflow: 'hidden' }}
+              className="mt-2"
+            >
+              <textarea
+                rows={2}
+                className='w-full mt-2 bg-white/10 rounded-sm p-1 border border-white/10 focus:outline-none focus:border-primary/50'
+                name="editedBio"
+                defaultValue={dbUser?.bio}
+                onChange={(e) => setEditedBio(e.target.value)}
+              />
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => setShowEditBio(false)} className="btn btn-secondary btn-xs rounded-xs text-white p-1">Cancel</button>
+                <button onClick={() => handleEditBio(dbUser.fb_uid)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Save</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
       <div>
         <h3 className="text-base md:text-lg font-semibold mb-4 mt-6 tracking-wide">
           Your Blabs

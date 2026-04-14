@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { FaHeart } from 'react-icons/fa';
 import useApplause from '../../Hooks/useApplause';
 import useAuth from '../../Hooks/useAuth';
@@ -14,7 +15,7 @@ import Swal from 'sweetalert2';
 const EchoeCard = ({ echoe, blabId, page }) => {
     const queryClient = useQueryClient()
     const [showEdit, setShowEdit] = useState(false)
-    const [editedText, setEditedText] = useState("")
+    const [editedText, setEditedText] = useState(echoe?.content)
     const { user } = useAuth()
     const { mutate: applauseEchoe, isPending } = useApplauseEchoe()
     const initialApplauded = echoe?.applause?.includes(user?.uid)
@@ -65,8 +66,14 @@ const EchoeCard = ({ echoe, blabId, page }) => {
         }
     }
     return (
-        <div>
-            <div key={echoe._id} className="bg-white/8 backdrop-blur-2 p-3 md:p-4 my-3 md:my-4 border border-white/20 shadow-lg rounded-sm transition">
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+                <div key={echoe._id} className="bg-white/8 backdrop-blur-2 p-3 md:p-4 my-3 md:my-4 border border-white/20 shadow-lg rounded-sm transition">
                 <ToastContainer
                     position="top-center"
                     autoClose={2000}
@@ -118,9 +125,17 @@ const EchoeCard = ({ echoe, blabId, page }) => {
 
                 <div className='flex justify-between items-end'>
                     {/* Content */}
-                    <p className="leading-relaxed text-sm">
-                        {echoe.content}
-                    </p>
+                        <AnimatePresence initial={false} mode="wait">
+                            <motion.p
+                                key={echoe.content}
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.2 }}
+                                className="leading-relaxed text-sm"
+                            >
+                                {echoe.content}
+                            </motion.p>
+                        </AnimatePresence>
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 ">
@@ -137,18 +152,28 @@ const EchoeCard = ({ echoe, blabId, page }) => {
                         <p className='text-sm'>{echoe.applauseCount}</p>
                     </div>
                 </div>
-                {
-                    showEdit && <div>
-                        <h2 className='text-xs divider'>Edit Echoe</h2>
-                        <textarea rows={2} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedEcho" defaultValue={echoe?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
-                        <div className='flex gap-1  justify-end'>
-                            <button onClick={() => setShowEdit(false)} className=' btn btn-xs btn-secondary'>Cancel </button>
-                            <button onClick={() => handleEditEcho(echoe._id, echoe.blabId)} className=' btn btn-xs btn-primary'>Update </button>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
+                <AnimatePresence>
+                    {showEdit && (
+                        <motion.div
+                            key="echoe-edit-panel"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25 }}
+                            style={{ overflow: 'hidden' }}
+                        >
+                            <h2 className='text-xs divider'>Edit Echoe</h2>
+                            <textarea rows={2} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedEcho" defaultValue={echoe?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
+                            <div className='flex gap-1 justify-end'>
+                                <button onClick={() => setShowEdit(false)} className='btn btn-xs btn-secondary'>Cancel</button>
+                                <button onClick={() => handleEditEcho(echoe._id, echoe.blabId)} className='btn btn-xs btn-primary'>Update</button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                </div>
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

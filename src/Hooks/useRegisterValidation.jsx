@@ -4,6 +4,10 @@ const useRegisterValidation = () => {
   const [error, setError] = useState("");
 
   const validateUsername = (username) => {
+    if (username !== username.trim()) {
+      setError("Username cannot start or end with spaces");
+      return false;
+    }
     if (username.includes(" ")) {
       setError("Username cannot contain spaces");
       return false;
