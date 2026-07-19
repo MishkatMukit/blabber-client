@@ -7,7 +7,7 @@ Blabber is a full-stack social discussion platform where users can share thought
 ## Screenshot
 
 <!-- Replace the path below with an actual screenshot of the running app -->
-![Blabber Screenshot](./src/assets/logo.png)
+<!-- ![Blabber Screenshot](./src/assets/logo.png) -->
 
 > Add a screenshot at `src/assets/screenshot.png` and update the path above to display the app preview here.
 
