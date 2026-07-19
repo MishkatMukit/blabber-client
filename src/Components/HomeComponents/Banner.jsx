@@ -1,4 +1,6 @@
 import React from 'react';
+import { easeInOut, motion } from "motion/react"
+import { Link } from 'react-router';
 
 const Banner = () => {
     return (
@@ -16,13 +18,12 @@ const Banner = () => {
                         Share thoughts, join conversations, and build communities.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 md:justify-start justify-center">
-                        <button className="btn bg-rose-600 px-8">
+                    <div className="flex flex-col items-center sm:flex-row gap-4 md:justify-start justify-center">
+                        <button className="btn btn-primary px-8">
                             Start Blabbering
                         </button>
-                        <button className="btn btn-ghost">
-                            Browse Blabs
-                        </button>
+                        <Link className='btn btn-outline hover:bg-transparent hover:border-primary border-2 shadow-none hover:text-primary'>Browse Blabs</Link>
+                        
                     </div>
                 </div>
 
@@ -30,21 +31,26 @@ const Banner = () => {
                 <div className="relative w-full max-w-xl mx-auto">
 
                     {/* Post 1 */}
-                    <div className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg">
+                    <motion.div animate={{ x: [20, 0, 20] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: easeInOut }}
+                        className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg">
                         <div className="flex justify-between text-sm text-base-content/60 mb-2">
                             <span>#tech</span>
                             <span>12 echoes</span>
                         </div>
-                        <h3 className="font-semibold text-lg mb-1">
+                        <h3 className="font-semibold  text-lg mb-1">
                             Why do devs keep old projects forever?
                         </h3>
                         <p className="text-sm text-base-content/70">
                             Because deleting them feels like deleting memories.
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* Post 2 */}
-                    <div className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg mt-4 ml-6">
+                    <motion.div
+                        animate={{ x: [-30, 0, -30] }}
+                        transition={{ duration: 7.5, repeat: Infinity, ease: easeInOut }}
+                        className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg mt-4 ml-6">
                         <div className="flex justify-between text-sm text-base-content/60 mb-2">
                             <span>#random</span>
                             <span>5 echoes</span>
@@ -55,10 +61,13 @@ const Banner = () => {
                         <p className="text-sm text-base-content/70">
                             I open 20 tabs so I feel busy even when I’m not.
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* Post 3 */}
-                    <div className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg mt-4 -ml-4">
+                    <motion.div
+                        animate={{ x: [0, 30, 0] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: easeInOut }}
+                        className="p-5 rounded-2xl bg-base-100/40 backdrop-blur-xl border border-white/10 shadow-lg mt-4 -ml-4">
                         <div className="flex justify-between text-sm text-base-content/60 mb-2">
                             <span>#devlife</span>
                             <span>21 echoes</span>
@@ -69,7 +78,7 @@ const Banner = () => {
                         <p className="text-sm text-base-content/70">
                             Night coding hits different. Fewer distractions, more chaos.
                         </p>
-                    </div>
+                    </motion.div>
 
                 </div>
 
