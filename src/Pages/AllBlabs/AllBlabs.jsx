@@ -11,9 +11,9 @@ const AllBlubs = () => {
     const limit = 5;
     const { data, isLoading } = useAllBlabsAPI(page, limit)
     const allBlabs = data?.data || [];
-    const totalPages = data?.totalPages;
+    const totalPages = data?.meta?.totalPages || 1;
     // console.log(allBlabs);
-    const { user, dbUser, loading } = useAuth()
+    const { dbUser } = useAuth()
     return (
         <div className='max-w-[95%] md:max-w-3xl mx-auto pt-16 px-1 md:px-0'>
             <Helmet><title>Blabber-Blabs</title></Helmet>
@@ -32,7 +32,7 @@ const AllBlubs = () => {
                     <div className='max-w-3xl mx-auto'>
                         {
                             allBlabs.map(blab => (
-                                <BlabCard key={blab._id} blab={blab} page={page}></BlabCard>
+                                <BlabCard key={blab.id} blab={blab} page={page}></BlabCard>
                             ))
                         }
                     </div>

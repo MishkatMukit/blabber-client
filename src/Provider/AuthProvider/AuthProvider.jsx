@@ -1,84 +1,76 @@
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
-
 import { createContext, useEffect, useState } from "react";
-import { auth } from "../../Firebase/firebase.init";
-import { GoogleAuthProvider } from "firebase/auth";
-import axios from "axios";
 import axiosPublic from "../../Hooks/useAxiosPublic";
-import useDbUser from "../../Hooks/useDbUser";
-// import axios from "axios";
-export const AuthContext = createContext(null)
+import getMe from "../../API/getMe";
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [dbUser, setDbuser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [dbUser, setDbuser] = useState(null)
-    const googleProvider = new GoogleAuthProvider();
-    const { data: queriedDbUser, isLoading: isDbUserLoading } = useDbUser(user?.uid);
+    const applySession = (session) => {
+        const currentUser = session?.user || session || null;
+        setUser(currentUser);
+        setDbuser(currentUser?.profile || null);
+        return currentUser;
+    };
 
-    // console.log(googleProvider)
-    const registerUser = (email, password) => {
-        setLoading(true)
-        return createUserWithEmailAndPassword(auth, email, password);
-    }
-    const googleLogin = () => {
-        return signInWithPopup(auth, googleProvider);
-    }
-    const logInUser = (email, password) => {
-        setLoading(true)
-        return signInWithEmailAndPassword(auth, email, password)
-    }
-    const logOutUser = () => {
-        setUser(null)
-        setLoading(true)
-        return signOut(auth)
-    }
+    const registerUser = async (name, email, password, profilePhoto) => {
+        const response = await axiosPublic.post("/auth/register", {
+            name,
+            email,
+            password,
+            ...(profilePhoto ? { profilePhoto } : {}),
+        });
+        applySession(response.data.data);
+        return response.data.data;
+    };
 
+    const logInUser = async (email, password) => {
+        const response = await axiosPublic.post("/auth/login", { email, password });
+        applySession(response.data.data);
+        return response.data.data;
+    };
+
+    const logOutUser = async () => {
+        try {
+            await axiosPublic.post("/auth/logout", {});
+        } catch {
+            // logout is stateless; clear local state regardless
+        } finally {
+            setUser(null);
+            setDbuser(null);
+        }
+    };
     useEffect(() => {
-        const unplug = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser)
-            if (!currentUser) {
-                setDbuser(null)
-                setLoading(false)
-                return
-            }
-        })
+        let active = true;
+        getMe()
+            .then((me) => {
+                if (active && me) applySession(me);
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
         return () => {
-            unplug();
-        }
-    }, [])
-    useEffect(() => {
-        if (!user) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(true)
-            return
-        }
-        if (isDbUserLoading) {
-            setLoading(true)
-        } else {
-            setDbuser(queriedDbUser || null)
-            setLoading(false)
-        }
-    }, [queriedDbUser, isDbUserLoading, user])
+            active = false;
+        };
+    }, []);
+
     const authInfo = {
         loading,
-        googleProvider,
         registerUser,
-        googleLogin,
         logOutUser,
         logInUser,
         user,
         setUser,
         dbUser,
-        setDbuser
-    }
+        setDbuser,
+    };
 
-    return (
-        <AuthContext.Provider value={authInfo}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

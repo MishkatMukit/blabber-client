@@ -3,15 +3,14 @@ import useAxiosSecure from "../Hooks/useAxiosSecure";
 
 const useEchoesAPI = (id, enabled = true) => {
     const axiosSecure = useAxiosSecure();
-    const query = useQuery({
+    return useQuery({
         queryKey: ["echoes", id],
-        enabled: enabled,
+        enabled: enabled && !!id,
         queryFn: async () => {
-            const res = await axiosSecure.get(`/blab/echoes/${id}`);
-            return res.data;
+            const response = await axiosSecure.get(`/echo/blab/${id}`);
+            return response.data.data;
         },
     });
-    return query;
 };
 
 export default useEchoesAPI;

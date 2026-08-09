@@ -7,18 +7,19 @@ import { IoIosAdd, IoMdLogIn } from 'react-icons/io';
 import { FaBars, FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
+import logo from '../../assets/logo.png';
 const Navbar = () => {
     const { user, dbUser, logOutUser } = useAuth()
     const [visible, setVisible] = useState(true);
     const lastScrollY = useRef(0);
     const ticking = useRef(false);
     const queryClient = useQueryClient()
-    const links = <>
-        <li className='font-light  p-1' ><NavLink to="/">Home</NavLink></li>
-        <li className='font-light  p-1'><NavLink to="/allBlabs">Blabs</NavLink></li>
-        {/* <li><NavLink title='Add Blubs' to="/addBlabs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li> */}
+    // const links = <>
+    //     <li className='font-light  p-1' ><NavLink to="/">Home</NavLink></li>
+    //     <li className='font-light  p-1'><NavLink to="/allBlabs">Blabs</NavLink></li>
+    //     {/* <li><NavLink title='Add Blubs' to="/addBlabs"><IoIosAdd className='text-xl md:text-2xl bg-primary rounded-xs text-base-200' /></NavLink></li> */}
 
-    </>
+    // </>
     useEffect(() => {
         const updateScroll = () => {
             const currentScroll = window.scrollY;
@@ -59,9 +60,7 @@ const Navbar = () => {
             confirmButtonText: "Yes, Logout"
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await logOutUser().then(res =>
-                    console.log("logged out sucessfully!")
-                )
+                await logOutUser()
                 queryClient.clear();
                 Swal.fire({
                     title: "Logged out",
@@ -77,39 +76,57 @@ const Navbar = () => {
     return (
         <div className={` fixed  w-full top-0 z-50 transition-transform duration-300 ${visible ? "translate-y-0" : "-translate-y-full"
             }`}>
-            <div className="navbar max-w-[95%] mx-auto bg-white/8 backdrop-blur-2   border border-t-0 border-white/20 shadow-lg rounded-sm">
+            <div className="navbar max-w-[95%] mx-auto bg-white/8 backdrop-blur-2xl   border border-t-0 border-white/20 shadow-lg rounded-sm">
                 <div className="navbar-start">
-                    <Link to="/allBlabs" className="md:pl-2 text-xl font-levin text-primary">Blabber</Link>
-                    <ul className="flex gap-4 px-4 lg:hidden">
-                        {
-                            links
-                        }
-                    </ul>
+                    <Link to="/allBlabs" className="md:hidden">
+                        <img src={logo} alt="Blabber Logo" className="h-8 w-8" />
+                    </Link>
+                    <Link to="/allBlabs" className="hidden  font-semibold md:block md:pl-2 text-xl font-roboto text-primary"><img src={logo} alt="Blabber Logo" className="h-8 w-8 inline" />Blabber</Link>
                 </div>
 
-                <div className="navbar-end dropdown dropdown-bottom">
-                    <div className=" hidden lg:flex ">
-                        <ul className="flex gap-4 px-4">
-                            {
-                                links
-                            }
-                        </ul>
-                    </div>
-                    <div className="dropdown dropdown-end">
+                <div className="navbar-end flex items-center gap-2">
+                    <ul className="flex items-center gap-4">
+                        {
+                            !user && <li className='font-light p-1'>
+                                <NavLink to="/" className={({ isActive }) =>
+                                    isActive
+                                        ? 'text-primary font-medium drop-shadow-[0_0_8px_var(--color-primary)] transition-all duration-200'
+                                        : 'transition-all duration-200 hover:text-primary/70'
+                                }>Home</NavLink>
+                            </li>
+                        }
+                        {
+                            user && <li className='font-light p-1'>
+                                <NavLink to="/chat" className={({ isActive }) =>
+                                    isActive
+                                        ? 'text-primary font-medium drop-shadow-[0_0_8px_var(--color-primary)] transition-all duration-200'
+                                        : 'transition-all duration-200 hover:text-primary/70'
+                                }>Chat</NavLink>
+                            </li>
+                        }
+                        <li className='font-light p-1'>
+                            <NavLink to="/allBlabs" className={({ isActive }) =>
+                                isActive
+                                    ? 'text-primary font-medium drop-shadow-[0_0_8px_var(--color-primary)] transition-all duration-200'
+                                    : 'transition-all duration-200 hover:text-primary/70'
+                            }>Blabs</NavLink>
+                        </li>
+                    </ul>
+                    <div className="dropdown dropdown-end mx-2">
                         <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
                             <div className="w-10 rounded-full">
                                 {
                                     dbUser ? <img
-                                        alt="Tailwind CSS Navbar component"
+                                        alt="User avatar"
                                         src={`https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}`} /> : <img
-                                        alt="Tailwind CSS Navbar component"
+                                        alt="User avatar"
                                         src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
                                 }
 
                             </div>
                         </label>
 
-                        <ul tabIndex={0} className="  menu dropdown-content bg-white/8 backdrop-blur-2 rounded-box  mt-4 ">
+                        <ul tabIndex={0} className="menu dropdown-content bg-white/8 backdrop-blur-2 rounded-box mt-4" role="menu">
                             <li><Link to="/dashboard">Profile <FaRegUserCircle size={18} /></Link></li>
                             <li>
                                 {

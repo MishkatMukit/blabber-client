@@ -10,7 +10,7 @@ const useDbUser = (uid) => {
     },
     enabled: !!uid,
     retry: 5,
-    retryDelay: (attemptIndex) => 500, // 500ms between retries
+    retryDelay: () => 500, // 500ms between retries
   });
 };
 

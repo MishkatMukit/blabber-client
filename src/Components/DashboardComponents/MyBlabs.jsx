@@ -1,4 +1,4 @@
-import React, { use } from 'react';
+import React from 'react';
 import { LuHeartHandshake } from 'react-icons/lu';
 import { BiCommentDots } from 'react-icons/bi';
 import { FaHeart } from 'react-icons/fa';
@@ -10,7 +10,7 @@ const MyBlabs = ({ myBlabs }) => {
         <div>
             {
                 myBlabs?.map(blab => (
-                    <BlabCard key={blab._id} blab={blab}> </BlabCard>
+                    <BlabCard key={blab.id} blab={blab}> </BlabCard>
                 ))
             }
 

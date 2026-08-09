@@ -10,6 +10,7 @@ import AllBlubs from "../Pages/AllBlabs/AllBlabs";
 import Dashboard from "../Pages/Dashboard/Dashboard";
 import BlabDetails from "../Pages/BlabDetails/BlabDetails";
 import UserDashboard from "../Pages/UserDashboard/UserDashboard";
+import Chat from "../Pages/Chat/Chat";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
             {
                 path: "/UserDashboard/:id",
                 element: <PrivateRoute><UserDashboard></UserDashboard></PrivateRoute>
+            },
+            {
+                path: "/chat",
+                element: <PrivateRoute><Chat></Chat></PrivateRoute>
             },
             {
                 path: "/*",

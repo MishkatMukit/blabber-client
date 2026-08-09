@@ -4,19 +4,17 @@ import useAuth from "../Hooks/useAuth";
 
 const useMyBlabsAPI = () => {
   const axiosSecure = useAxiosSecure();
-  const { user } = useAuth();
+  const { dbUser } = useAuth();
 
-  const query = useQuery({
-    queryKey: ["myBlabs", user?.uid],
-    enabled: !!user?.uid,
+  return useQuery({
+    queryKey: ["myBlabs", dbUser?.id],
+    enabled: false,
     queryFn: async () => {
-      const res = await axiosSecure.get(`/blabs/${user.uid}`);
-      return res.data;
+      const response = await axiosSecure.get(`/blabs?authorId=${dbUser.id}`);
+      return response.data.data;
     },
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5,
   });
-
-  return query;
 };
 
 export default useMyBlabsAPI;

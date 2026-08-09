@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { easeInOut, motion } from "motion/react"
 import { Link } from 'react-router';
 

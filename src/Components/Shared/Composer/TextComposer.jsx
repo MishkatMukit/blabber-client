@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
 import useAuth from '../../../Hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import EmojiPicker from 'emoji-picker-react';
-import axiosPublic from '../../../Hooks/useAxiosPublic';
+import useAxiosSecure from '../../../Hooks/useAxiosSecure';
+import { toast } from 'react-toastify';
 
 const TextComposer = ({ blabId }) => {
 
-    const { dbUser, setDbUser } = useAuth()
+    useAuth()
     const [text, setText] = useState("");
     const [showEmoji, setShowEmoji] = useState(false)
+    const [isPosting, setIsPosting] = useState(false);
     const maxChars = 500;
     const queryClient = useQueryClient()
+    const axiosSecure = useAxiosSecure()
     const handleAddBlab = async () => {
-        const echoe = {
-            blabId,
-            content: text,
-            authorId: dbUser?.fb_uid,
-            authorUsername: dbUser?.userName,
-        };
-        await axiosPublic.post("/blabs/echoes", echoe);
-        queryClient.invalidateQueries({ queryKey: ["blab", blabId] });
-        queryClient.invalidateQueries({ queryKey: ["echoes", blabId] });
-        queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
-        setText('');
+        const echoe = { blabId, content: text };
+        setIsPosting(true);
+        try {
+            await axiosSecure.post("/echo", echoe);
+            toast.success('Echo posted successfully');
+            queryClient.invalidateQueries({ queryKey: ["blab", blabId] });
+            queryClient.invalidateQueries({ queryKey: ["echoes", blabId] });
+            queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
+            setText('');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to post echo');
+        } finally {
+            setIsPosting(false);
+        }
     }
     return (
         <div className=" rounded-xl space-y-3 max-w-2xl relative ">
@@ -73,9 +78,9 @@ const TextComposer = ({ blabId }) => {
                     <button
                         onClick={handleAddBlab}
                         className="btn btn-sm md:btn-md btn-primary"
-                        disabled={!text.trim()}
+                        disabled={!text.trim() || isPosting}
                     >
-                        Echo
+                        {isPosting ? 'Posting...' : 'Echo'}
                     </button>
                 </div>
             </div>

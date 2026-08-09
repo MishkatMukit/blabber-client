@@ -1,54 +1,45 @@
-import axios from "axios";
 import { useEffect } from "react";
-import useAuth from "./useAuth";
 import { useNavigate } from "react-router";
-
-const axiosInstance = axios.create({
-  baseURL: "https://blabber-server.vercel.app/",
-  // baseURL:"http://localhost:3000"
-});
+import axiosPublic from "./useAxiosPublic";
+import useAuth from "./useAuth";
 
 const useAxiosSecure = () => {
-  const { user, logOutUser } = useAuth();
+  const { logOutUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    let refreshing = null;
 
-    const requestInterceptor = axiosInstance.interceptors.request.use(
-      async (config) => {
-        if (user) {
-          const token = await user.getIdToken();   // ✅ correct token
-          config.headers.authorization = `Bearer ${token}`;
+    const responseInterceptor = axiosPublic.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalConfig = error.config;
+
+        if (error?.response?.status === 401 && !originalConfig?.skipAuthRedirect && !originalConfig?._retried) {
+          try {
+            refreshing =
+              refreshing ||
+              axiosPublic.post("/auth/refresh-token", {});
+
+            await refreshing;
+            originalConfig._retried = true;
+            return axiosPublic(originalConfig);
+          } catch (refreshError) {
+            await logOutUser();
+            navigate("/login");
+            return Promise.reject(refreshError);
+          } finally {
+            refreshing = null;
+          }
         }
-        return config;
+        return Promise.reject(error);
       }
     );
 
-    const responseInterceptor = axiosInstance.interceptors.response.use(
-      (res) => res,
-      (err) => {
-        const status = err?.response?.status;
+    return () => axiosPublic.interceptors.response.eject(responseInterceptor);
+  }, [logOutUser, navigate]);
 
-        if (status === 401 || status === 403) {
-          console.log("Session expired → logout");
-
-          logOutUser()
-            .then(() => navigate("/login"))
-            .catch(console.error);
-        }
-
-        return Promise.reject(err);
-      }
-    );
-
-    return () => {
-      axiosInstance.interceptors.request.eject(requestInterceptor);
-      axiosInstance.interceptors.response.eject(responseInterceptor);
-    };
-
-  }, [user, logOutUser, navigate]);
-
-  return axiosInstance;
+  return axiosPublic;
 };
 
 export default useAxiosSecure;

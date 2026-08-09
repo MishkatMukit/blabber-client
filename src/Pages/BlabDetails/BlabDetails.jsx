@@ -25,15 +25,15 @@ const BlabDetails = () => {
                             echoes.length === 0 && <p className=" text-gray-500 py-2">No echoes yet</p>
                         }
                     </div>
-                    <div className="max-h-[450px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 transition-all">
-                        <div className="max-w-2xl border-l-3 border-white/10 pl-2 md:pl-6">
+                    <div className="max-h-[450px] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 transition-all">
+                        <div className="max-w-2xl border-l-2 border-white/10">
                             {echoes.map(echoe => (
                                 echoesLoading
-                                    ? <BlabSkeleton key={Math.random()}></BlabSkeleton>
+                                    ? <BlabSkeleton key={`echo-skeleton-${echoe.id}`}></BlabSkeleton>
                                     : (
-                                        <div key={echoe._id} className="relative pl-3 md:pl-6">
+                                        <div key={echoe.id} className="relative pl-4 md:pl-8">
                                             {/* horizontal connector */}
-                                            <div className="absolute md:-left-6 left-0 top-10  md:w-12 w-6 h-[3px] bg-white/10"></div>
+                                            <div className="absolute left-0 top-10 w-4 md:w-8 h-[2px] bg-white/10"></div>
 
                                             <EchoeCard echoe={echoe} blabId={id} />
                                         </div>

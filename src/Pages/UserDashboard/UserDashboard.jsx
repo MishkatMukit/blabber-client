@@ -1,23 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { FaPen } from "react-icons/fa";
 import { useState } from "react";
 import useAuth from "../../Hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import BlabSkeleton from "../../Components/Shared/Skeleton/BlabSkeleton";
 import MyBlabs from "../../Components/DashboardComponents/MyBlabs";
 import ProfileSkeleton from "../../Components/Shared/Skeleton/ProfileSkeleton";
 import Skeleton from "react-loading-skeleton";
 const UserDashboard = () => {
+    const navigate = useNavigate()
     const { id } = useParams()
     const axiosSecure = useAxiosSecure()
-    const { dbUser, user } = useAuth()
-    const queryClient = useQueryClient()
+    const { dbUser } = useAuth()
     const [showEditBio, setShowEditBio] = useState(false)
-    const [editedBio, setEditedBio] = useState("")
     const { data: userBlabs = [], isLoading } = useQuery({
         queryKey: ["userBlabs", id],
         queryFn: async () => {
@@ -32,7 +30,22 @@ const UserDashboard = () => {
             return res.data
         }
     })
-
+    const handleStartChat = async () => {
+        // create conversation (or get existing one) via REST
+        const res = await axiosSecure.post('/conversations', {
+            recipientId: id  // id comes from useParams — the profile we're viewing
+        });
+        const conversation = {
+            ...res.data,
+            otherUser: {
+                fb_uid: userData?.fb_uid,
+                userName: userData?.userName,
+                photo: userData?.photo
+            }
+        }
+        // redirect to chat page with this conversation already selected
+        navigate('/chat', { state: { conversation } });
+    };
     return (
         <div className="max-w-[95%] md:max-w-3xl mx-auto px-2 md:px-4 pt-20 md:pt-24 pb-10 space-y-6">
             <Helmet><title>Blabber-Dashboard</title></Helmet>
@@ -65,7 +78,8 @@ const UserDashboard = () => {
                                     No bio yet
                                 </p>
                             )}
-                            {dbUser?.fb_uid === id && <button onClick={() => setShowEditBio(!showEditBio)} className="bg-primary rounded-xs text-white p-1 mt-2">
+
+                            {dbUser?.id === id && <button onClick={() => setShowEditBio(!showEditBio)} className="bg-primary rounded-xs text-white p-1 mt-2">
                                 <FaPen size={8} />
                             </button>}
                         </div>
@@ -74,6 +88,15 @@ const UserDashboard = () => {
                             Joined {new Date(userData?.createdAt).toDateString()}
                         </p>
                     </div>
+                    {/* only show Message button on OTHER people's profiles, not your own */}
+                    {dbUser?.id !== id && (
+                        <button
+                            onClick={handleStartChat}
+                            className="mt-4 btn btn-primary btn-xs rounded-lg text-white"
+                        >
+                            Message
+                        </button>
+                    )}
 
                 </div>
                 }
@@ -90,11 +113,8 @@ const UserDashboard = () => {
                 </div>
                 {
                     showEditBio && <div className="mt-2">
-                        <textarea rows={2} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedBio" defaultValue={userData?.bio} onChange={(e) => setEditedBio(e.target.value)} id="" />
-                        <div className="flex gap-2 mt-2">
-                            <button onClick={() => handleEditBio(userData.fb_uid)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Save</button>
-                            <button onClick={() => setShowEditBio(!showEditBio)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Cancel</button>
-                        </div>
+                        <p className="text-sm opacity-60">Profile editing is not available in the new API yet.</p>
+                        <button onClick={() => setShowEditBio(false)} className="btn btn-primary btn-xs rounded-xs text-white p-1">Close</button>
                     </div>
                 }
             </div>

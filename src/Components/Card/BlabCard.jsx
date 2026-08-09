@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'motion/react';
 import { BiCommentDots, BiEdit } from 'react-icons/bi';
 import { FaHeart } from 'react-icons/fa';
@@ -6,29 +7,23 @@ import useApplause from '../../Hooks/useApplause';
 import useAuth from '../../Hooks/useAuth';
 import { IoMdBookmark } from 'react-icons/io';
 import { FiEdit } from 'react-icons/fi';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router';
 import { RiDeleteBackLine } from "react-icons/ri";
 import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import { HiDotsHorizontal } from 'react-icons/hi';
-import axiosPublic from '../../Hooks/useAxiosPublic';
 const BlabCard = ({ blab, page }) => {
     const [showEdit, setShowEdit] = useState(false)
     const [editedText, setEditedText] = useState(blab?.content)
-    const { user } = useAuth()
+    const [, setIsUpdating] = useState(false);
+    const { user, dbUser } = useAuth()
     const { mutate: applauseBlab, isPending } = useApplause(page)
-    const initialApplauded = blab?.applause?.includes(user?.uid)
-    const [isApplauded, setIsApplauded] = useState(initialApplauded);
+    const [isApplauded, setIsApplauded] = useState(false);
     const queryClient = useQueryClient();
     const axiosSecure = useAxiosSecure()
     const navigate = useNavigate()
-    useEffect(() => {
-        if (user && blab?.applause) {
-            setIsApplauded(blab.applause.includes(user.uid));
-        }
-    }, [user, blab]);
     const notify = () => toast("Please login or register to give applause");
     const handleApplause = () => {
         if (!user) {
@@ -40,7 +35,9 @@ const BlabCard = ({ blab, page }) => {
         setIsApplauded((prev) => !prev);
 
         // mutation runs in background
-        applauseBlab(blab._id);
+        applauseBlab(blab.id, {
+            onSuccess: (result) => setIsApplauded(result?.applauded ?? false),
+        });
     };
     const handleDelete = async (id) => {
         const result = await Swal.fire({
@@ -57,7 +54,7 @@ const BlabCard = ({ blab, page }) => {
 
         if (!result.isConfirmed) return;
 
-        const res = await axiosSecure.delete(`/blabs/delete/${id}`);
+        const res = await axiosSecure.delete(`/blabs/${id}`);
         if (res.data.success) {
             await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
             await queryClient.invalidateQueries({ queryKey: ["myBlabs"] });
@@ -74,11 +71,19 @@ const BlabCard = ({ blab, page }) => {
         const updatedBlab = {
             content: editedText
         }
-        axiosPublic.patch(`/editedBlab/${id}`, updatedBlab).then(async res => {
-            setShowEdit(false)
+        setIsUpdating(true);
+        try {
+            await axiosSecure.patch(`/blabs/${id}`, updatedBlab);
+            setShowEdit(false);
+            toast.success('Blab updated successfully');
             await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
-            // console.log(res.data)
-        })
+            await queryClient.invalidateQueries({ queryKey: ["myBlabs"] });
+
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update blab');
+        } finally {
+            setIsUpdating(false);
+        }
     }
     return (
         <AnimatePresence>
@@ -88,33 +93,20 @@ const BlabCard = ({ blab, page }) => {
                 exit={{ opacity: 0, y: -16, scale: 0.95 }}
                 transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-                <div key={blab._id} className="bg-white/8 backdrop-blur-2 p-3 md:p-4 my-3 md:my-4 border border-white/20 shadow-lg rounded-sm transition">
-                    <ToastContainer
-                        position="top-center"
-                        autoClose={2000}
-                        hideProgressBar={true}
-                        newestOnTop
-                        closeOnClick
-                        pauseOnHover
-                        draggable
-                        theme="dark"
-                        toastClassName="bg-white/20  border border-white/10 text-white rounded-xl shadow-lg"
-                        bodyClassName="text-sm font-medium"
-                        closeButton={false}
-                    />
+                <div key={blab.id} className="bg-white/8 backdrop-blur-2 p-3 md:p-4 my-3 md:my-4 border border-white/20 shadow-lg rounded-sm transition">
                     <div className='flex justify-between'>
                         {/* Author */}
                         <div className="flex relative items-center gap-3 mb-3">
 
 
                             <img title='visit profile'
-                                onClick={() => navigate(`/UserDashboard/${blab.authorId}`)}
-                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${blab.authorUsername}`}
+                                onClick={() => navigate(`/UserDashboard/${blab.author?.id}`)}
+                                src={blab.author?.photo || `https://api.dicebear.com/7.x/initials/svg?seed=${blab.author?.userName}`}
                                 alt="avatar"
                                 className="w-8 h-8 md:w-10 md:h-10 rounded-full"
                             />
                             <div>
-                                <p className="font-semibold text-sm md:text-base">@{blab.authorUsername}</p>
+                                <p className="font-semibold text-sm md:text-base">@{blab.author?.userName}</p>
                                 <p className="text-xs opacity-60">
                                     {new Date(blab.createdAt).toLocaleString()}
                                 </p>
@@ -124,11 +116,23 @@ const BlabCard = ({ blab, page }) => {
                         </div>
                         <div>
                             {
-                                user?.uid === blab?.authorId && <div className="dropdown dropdown-end md:dropdown-right">
-                                    <button tabIndex={0} role="button" className="cursor-pointer"><HiDotsHorizontal className='text-xl' /></button>
-                                    <ul tabIndex="-1" className="dropdown-content menu bg-black/30 rounded-box z-1 ml-5 w-24 p-1 shadow-sm">
-                                        <li onClick={() => setShowEdit(!showEdit)}><a>Edit <BiEdit></BiEdit></a></li>
-                                        <li onClick={() => handleDelete(blab._id)}><a>Delete<RiDeleteBackLine /></a></li>
+                                dbUser?.id === blab?.author?.id && <div className="dropdown dropdown-end md:dropdown-right">
+                                    <button 
+                                        tabIndex={0} 
+                                        role="button" 
+                                        aria-label="Blab options menu"
+                                        aria-expanded={showEdit}
+                                        className="cursor-pointer"
+                                    >
+                                        <HiDotsHorizontal className='text-xl' />
+                                    </button>
+                                    <ul 
+                                        tabIndex="-1" 
+                                        className="dropdown-content menu bg-black/30 rounded-box z-1 ml-5 w-24 p-1 shadow-sm"
+                                        role="menu"
+                                    >
+                                        <li role="menuitem" onClick={() => setShowEdit(!showEdit)}><a>Edit <BiEdit aria-hidden="true"></BiEdit></a></li>
+                                        <li role="menuitem" onClick={() => handleDelete(blab.id)}><a>Delete<RiDeleteBackLine aria-hidden="true" /></a></li>
                                     </ul>
                                 </div>
                             }
@@ -157,18 +161,19 @@ const BlabCard = ({ blab, page }) => {
 
                                     disabled={isPending}
                                     onClick={handleApplause}
+                                    aria-label={isApplauded ? "Remove applause from this blab" : "Give applause to this blab"}
                                     className={`cursor-pointer transition ${isApplauded ? "text-primary" : ""}`}
                                 >
                                     <FaHeart size={18} />
                                 </button>
                                 {/* <LuHeartHandshake  size={18}/> */}
                                 {/* fill='#E11D48' */}
-                                {blab.applauseCount}
+                                {blab._count?.applause ?? 0}
                             </div>
 
-                            <Link to={`/blabdetails/${blab._id}`} className='flex items-center gap-1 cursor-pointer hover:text-primary transition'>
+                            <Link to={`/blabdetails/${blab.id}`} className='flex items-center gap-1 cursor-pointer hover:text-primary transition' aria-label={`View ${blab._count?.echoes ?? 0} echoes for this blab`}>
                                 <BiCommentDots size={18} />
-                                {blab.echoesCount}
+                                {blab._count?.echoes ?? 0}
                             </Link>
                         </div>
                     </div>
@@ -186,7 +191,7 @@ const BlabCard = ({ blab, page }) => {
                                 <textarea rows={3} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedEcho" defaultValue={blab?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
                                 <div className='flex gap-1  justify-end'>
                                     <button onClick={() => setShowEdit(false)} className=' btn btn-xs btn-secondary'>Cancel </button>
-                                    <button onClick={() => handleEditBlab(blab._id)} className=' btn btn-xs btn-primary'>Update</button>
+                                    <button onClick={() => handleEditBlab(blab.id)} className=' btn btn-xs btn-primary'>Update</button>
                                 </div>
                             </motion.div>
                         )}

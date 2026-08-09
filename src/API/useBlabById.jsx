@@ -3,16 +3,15 @@ import useAxiosSecure from "../Hooks/useAxiosSecure";
 
 const useBlabById = (id) => {
     const axiosSecure = useAxiosSecure();
-    const query = useQuery({
+    return useQuery({
         queryKey: ["blab", id],
         enabled: !!id,
         queryFn: async () => {
-            const res = await axiosSecure.get(`/blabdetails/${id}`);
-            return res.data;
+            const response = await axiosSecure.get(`/blabs/${id}`);
+            return response.data.data;
         },
-        staleTime: 1000 * 60 * 5
+        staleTime: 1000 * 60 * 5,
     });
-    return query;
 };
 
 export default useBlabById;

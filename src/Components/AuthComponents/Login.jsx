@@ -1,5 +1,5 @@
-import React, { use, useState } from 'react';
-import { AuthContext } from '../../Provider/AuthProvider/AuthProvider';
+import React, { useState } from 'react';
+import useAuth from '../../Hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Lottie from 'lottie-react';
 import lottieLogin from "../../assets/login.json"
@@ -7,35 +7,14 @@ import { IoEyeOutline } from 'react-icons/io5';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import Swal from 'sweetalert2';
-import axiosPublic from '../../Hooks/useAxiosPublic';
 
 const Login = () => {
     const [error, setError] = useState("");
-    const { logInUser, setUser, googleLogin } = use(AuthContext)
+    const { logInUser } = useAuth()
     const [eye, setEye] = useState(false)
     const navigate = useNavigate()
     const location = useLocation()
-    const handleGoogleSignIn = () => {
-        googleLogin()
-            .then((res) => {
-                const userInfo = {
-                    fb_uid: res.user.uid,
-                    email: res.user.email,
-                    userName: res.user.displayName?.toLowerCase().replace(/\s+/g, "_"),
-                    photo: `https://api.dicebear.com/7.x/initials/svg?seed=${res.user.displayName}`
-                }
-                axiosPublic.post('/users', userInfo).then(res => console.log(res.data))
-                setUser(res.user);
-                navigate("/allBlabs")
-                // navigate(location.state ? location.state : "/")
-            })
-            .catch((error) => {
-                console.error(error);
-                setError(error.message);
-            });
-    };
-
-    const handleLogin = (e) => {
+    const handleLogin = async(e) => {
         setError("")
         e.preventDefault();
         const form = e.target
@@ -47,7 +26,8 @@ const Login = () => {
             return;
         }
         // console.log(email, password);
-        logInUser(email, password).then((result) => {
+        try {
+            await logInUser(email, password)
             Swal.fire({
                 position: "center",
                 icon: "success",
@@ -55,10 +35,10 @@ const Login = () => {
                 showConfirmButton: false,
                 timer: 1500
             });
-            setUser(result)
-            navigate("/allBlabs")
-            // navigate(location.state ? location.state : "/")
-        }).catch(() => setError("Invalid email or password combination"))
+            navigate(location.state?.pathname || "/allBlabs")
+        } catch (error) {
+            setError(error.response?.data?.message || "Invalid email or password combination")
+        }
 
     }
     return (
@@ -90,10 +70,6 @@ const Login = () => {
                                 <p className='text-center text-base-200 font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/register">Register</Link></p>
                             </form>
                             <div className="divider">OR</div>
-                            <button onClick={handleGoogleSignIn} className="btn bg-base-200 text-black border-[#e5e5e5]">
-                                <FcGoogle />
-                                Continue with Google
-                            </button>
                         </div>
                     </div>
                 </div>

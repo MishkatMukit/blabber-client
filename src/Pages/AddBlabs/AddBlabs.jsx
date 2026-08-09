@@ -1,25 +1,22 @@
-import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
 import { useState } from 'react';
 import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import Swal from 'sweetalert2';
 import useAuth from '../../Hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
-import axiosPublic from '../../Hooks/useAxiosPublic';
+import useAxiosSecure from '../../Hooks/useAxiosSecure';
 
 const AddBlubs = () => {
-    const { dbUser, setDbUser } = useAuth()
+    useAuth()
     const [text, setText] = useState("");
     const [showEmoji, setShowEmoji] = useState(false)
+    const [isPosting, setIsPosting] = useState(false);
     const maxChars = 500;
     const queryClient = useQueryClient()
+    const axiosSecure = useAxiosSecure()
 
     const handleAddBlab = () => {
-        const blab = {
-            content: text,
-            authorId: dbUser?.fb_uid,
-            authorUsername: dbUser?.userName,
-        }
+        const blab = { content: text }
         Swal.fire({
             title: "Are you sure?",
             text: "proceed to post your new blab!",
@@ -32,7 +29,8 @@ const AddBlubs = () => {
             confirmButtonText: "Yes"
         }).then((result) => {
             if (result.isConfirmed) {
-                axiosPublic.post("/blabs", blab).then(() => {
+                setIsPosting(true);
+                axiosSecure.post("/blabs", blab).then(() => {
                     queryClient.invalidateQueries({ queryKey: ["allBlabs"] })
                     queryClient.invalidateQueries({ queryKey: ["myBlabs"] })
                     setText('')
@@ -43,7 +41,17 @@ const AddBlubs = () => {
                         background: "#111827",
                         color: "white"
                     });
-                })
+                }).catch((error) => {
+                    Swal.fire({
+                        title: "Error!",
+                        text: error.response?.data?.message || "Failed to post blab",
+                        icon: "error",
+                        background: "#111827",
+                        color: "white"
+                    });
+                }).finally(() => {
+                    setIsPosting(false);
+                });
             }
         });
     }
@@ -95,9 +103,9 @@ const AddBlubs = () => {
                     <button
                         onClick={handleAddBlab}
                         className="btn btn-sm btn-primary"
-                        disabled={!text.trim()}
+                        disabled={!text.trim() || isPosting}
                     >
-                        Blab
+                        {isPosting ? 'Posting...' : 'Blab'}
                     </button>
                 </div>
             </div>

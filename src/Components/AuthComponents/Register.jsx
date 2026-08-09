@@ -1,18 +1,16 @@
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { AuthContext } from '../../Provider/AuthProvider/AuthProvider';
 import { IoEyeOutline } from 'react-icons/io5';
 import Swal from 'sweetalert2';
 import lottieRegister from "../../assets/register.json"
 import Lottie from 'lottie-react';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import useAuth from '../../Hooks/useAuth';
-import axiosPublic from '../../Hooks/useAxiosPublic';
 import useRegisterValidation from '../../Hooks/useRegisterValidation';
 const Register = () => {
     const [eye, setEye] = useState(false)
     const [conEye, setConEye] = useState(false)
-    const { registerUser, user, setUser } = useAuth()
+    const { registerUser } = useAuth()
     const { error, setError, validateForm } = useRegisterValidation()
 
     const navigate = useNavigate()
@@ -30,7 +28,12 @@ const Register = () => {
             return
         }
 
-        registerUser(email, password).then((res) => {
+        registerUser(
+            userName,
+            email,
+            password,
+            `https://api.dicebear.com/7.x/initials/svg?seed=${userName}`
+        ).then(() => {
             Swal.fire({
                 position: "center",
                 icon: "success",
@@ -38,18 +41,9 @@ const Register = () => {
                 showConfirmButton: false,
                 timer: 1500
             });
-            const userInfo = {
-                photo: `https://api.dicebear.com/7.x/initials/svg?seed=${userName}`,
-                fb_uid: res.user.uid,
-                email: res.user.email,
-                userName: userName.toLowerCase(),
-            }
-            axiosPublic.post('/users', userInfo).then(res => {
-                // console.log(res.data)
-                navigate("/")
-            })
+            navigate("/allBlabs")
         }).catch((error) => {
-            setError(error.message || "Registration failed");
+            setError(error.response?.data?.message || error.message || "Registration failed");
         });
 
     }
