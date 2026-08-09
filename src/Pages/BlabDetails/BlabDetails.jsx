@@ -19,26 +19,27 @@ const BlabDetails = () => {
             {!isLoading && (
                 <div>
                     <h3>Echoes</h3>
-                    {/* <div className="divider"></div> */}
-                    <div>
-                        {
-                            echoes.length === 0 && <p className=" text-gray-500 py-2">No echoes yet</p>
-                        }
-                    </div>
                     <div className="max-h-[450px] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 transition-all">
                         <div className="max-w-2xl border-l-2 border-white/10">
-                            {echoes.map(echoe => (
-                                echoesLoading
-                                    ? <BlabSkeleton key={`echo-skeleton-${echoe.id}`}></BlabSkeleton>
-                                    : (
-                                        <div key={echoe.id} className="relative pl-4 md:pl-8">
-                                            {/* horizontal connector */}
+                            {echoesLoading ? (
+                                <div>
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <div key={`echo-skeleton-${i}`} className="relative pl-4 md:pl-8">
                                             <div className="absolute left-0 top-10 w-4 md:w-8 h-[2px] bg-white/10"></div>
-
-                                            <EchoeCard echoe={echoe} blabId={id} />
+                                            <BlabSkeleton />
                                         </div>
-                                    )
-                            ))}
+                                    ))}
+                                </div>
+                            ) : echoes.length === 0 ? (
+                                <p className="text-muted-foreground py-3">No echoes yet</p>
+                            ) : (
+                                echoes.map(echoe => (
+                                    <div key={echoe.id} className="relative pl-4 md:pl-8">
+                                        <div className="absolute left-0 top-10 w-4 md:w-8 h-[2px] bg-white/10"></div>
+                                        <EchoeCard echoe={echoe} blabId={id} />
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                     <div>

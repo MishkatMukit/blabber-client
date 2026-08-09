@@ -8,7 +8,7 @@ const useMyBlabsAPI = () => {
 
   return useQuery({
     queryKey: ["myBlabs", dbUser?.id],
-    enabled: false,
+    enabled: !!dbUser?.id,
     queryFn: async () => {
       const response = await axiosSecure.get(`/blabs?authorId=${dbUser.id}`);
       return response.data.data;

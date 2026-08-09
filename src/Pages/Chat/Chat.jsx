@@ -1,17 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IoSearch, IoSendSharp, IoArrowBack } from 'react-icons/io5';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router';
+import { Search, Send, ArrowLeft, MessageCircle } from 'lucide-react';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import useAuth from '../../Hooks/useAuth';
 import socket from '../../Hooks/socket';
-import { useLocation } from 'react-router';
+import { Avatar, AvatarImage, AvatarFallback } from '../../Components/ui/avatar';
+import { Button } from '../../Components/ui/button';
+import { Input } from '../../Components/ui/input';
+import { Skeleton } from '../../Components/ui/skeleton';
+
+const avatarUrl = (seed) => `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
+const initials = (name) => (name || '?').slice(0, 2).toUpperCase();
+
+const isSameDay = (a, b) =>
+    a && b && new Date(a).toDateString() === new Date(b).toDateString();
+
+const dayLabel = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+const formatTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    return isToday
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
 
 const Chat = () => {
     const axiosSecure = useAxiosSecure();
-    const { user } = useAuth();  // gives us user.uid to check if message is ours
+    const { dbUser } = useAuth();
     const location = useLocation();
+
     // ── STATE ────────────────────────────────────────────────────────
     const [selectedChat, setSelectedChat] = useState(null);
     const [message, setMessage] = useState('');
@@ -21,16 +53,20 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    // FIX 2: error state for user-facing feedback
+    const [messagesLoading, setMessagesLoading] = useState(false);
     const [conversationsError, setConversationsError] = useState(null);
     const [messagesError, setMessagesError] = useState(null);
-
-    // FIX 6: mobile view toggle — 'list' shows sidebar, 'chat' shows window
     const [mobileView, setMobileView] = useState('list');
 
     const bottomRef = useRef(null);
     const typingTimeout = useRef(null);
+    const selectedChatRef = useRef(selectedChat);
+    const isEmittingTyping = useRef(false);
+
+    useEffect(() => {
+        selectedChatRef.current = selectedChat;
+    }, [selectedChat]);
+
     useEffect(() => {
         if (location.state?.conversation) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -38,23 +74,14 @@ const Chat = () => {
             setMobileView('chat');
         }
     }, [location.state?.conversation]);
-    // FIX 1: ref mirror of selectedChat to avoid stale closures in socket handlers
-    const selectedChatRef = useRef(selectedChat);
-    useEffect(() => {
-        selectedChatRef.current = selectedChat;
-    }, [selectedChat]);
-
-    // FIX 5: track whether we are already in a "typing" session to throttle emissions
-    const isEmittingTyping = useRef(false);
 
     // ── LOAD CONVERSATIONS ON PAGE OPEN ─────────────────────────────
     useEffect(() => {
         axiosSecure.get('/conversations')
             .then(res => {
-                setConversations(res.data);
+                setConversations(res.data.data);
                 setConversationsError(null);
             })
-            // FIX 2: catch and surface errors instead of swallowing them
             .catch(() => setConversationsError('Failed to load conversations. Please refresh.'))
             .finally(() => setLoading(false));
     }, [axiosSecure]);
@@ -68,19 +95,20 @@ const Chat = () => {
         setMessagesError(null);
         setIsTyping(false);
         setMessage('');
-        axiosSecure.get(`/conversations/${selectedChat._id}/messages`)
+        setMessagesLoading(true);
+        axiosSecure.get(`/conversations/${selectedChat.id}/messages`)
             .then(res => {
-                setMessages(res.data);
+                setMessages(res.data.data);
                 setMessagesError(null);
             })
-            // FIX 2: catch message history failures
-            .catch(() => setMessagesError('Failed to load messages. Please try again.'));
+            .catch(() => setMessagesError('Failed to load messages. Please try again.'))
+            .finally(() => setMessagesLoading(false));
 
-        socket.emit('join:conversations', [selectedChat._id]);
-        socket.emit('message:read', { conversationId: selectedChat._id });
+        socket.emit('join:conversations', [selectedChat.id]);
+        socket.emit('message:read', { conversationId: selectedChat.id });
 
         setConversations(prev =>
-            prev.map(c => c._id === selectedChat._id ? { ...c, unread: 0 } : c)
+            prev.map(c => c.id === selectedChat.id ? { ...c, unread: 0 } : c)
         );
     }, [axiosSecure, selectedChat]);
 
@@ -88,13 +116,15 @@ const Chat = () => {
     useEffect(() => {
         socket.on('message:new', (msg) => {
             const current = selectedChatRef.current;
-            if (current && msg.conversationId === current._id) {
-                setMessages(prev => [...prev, msg]);
+            if (current && msg.conversationId === current.id) {
+                setMessages(prev =>
+                    prev.some(m => m.id === msg.id) ? prev : [...prev, msg]
+                );
                 socket.emit('message:read', { conversationId: msg.conversationId });
             } else {
                 setConversations(prev =>
                     prev.map(chat =>
-                        chat._id === msg.conversationId
+                        chat.id === msg.conversationId
                             ? { ...chat, unread: (chat.unread || 0) + 1 }
                             : chat
                     )
@@ -103,9 +133,17 @@ const Chat = () => {
 
             setConversations(prev =>
                 prev.map(chat =>
-                    chat._id === msg.conversationId
+                    chat.id === msg.conversationId
                         ? { ...chat, lastMessage: { content: msg.content, createdAt: msg.createdAt } }
                         : chat
+                )
+            );
+        });
+
+        socket.on('unread:update', ({ conversationId, unread }) => {
+            setConversations(prev =>
+                prev.map(chat =>
+                    chat.id === conversationId ? { ...chat, unread } : chat
                 )
             );
         });
@@ -115,10 +153,11 @@ const Chat = () => {
 
         return () => {
             socket.off('message:new');
+            socket.off('unread:update');
             socket.off('typing:start');
             socket.off('typing:stop');
         };
-    }, [selectedChat?._id]);
+    }, [selectedChat?.id]);
 
     // ── AUTO SCROLL ──────────────────────────────────────────────────
     useEffect(() => {
@@ -130,16 +169,15 @@ const Chat = () => {
         if (!message.trim() || !selectedChat) return;
 
         socket.emit('message:send', {
-            conversationId: selectedChat._id,
+            conversationId: selectedChat.id,
             content: message.trim()
         });
 
         setMessage('');
 
         clearTimeout(typingTimeout.current);
-        // FIX 5: reset typing session flag when message is sent
         isEmittingTyping.current = false;
-        socket.emit('typing:stop', { conversationId: selectedChat._id });
+        socket.emit('typing:stop', { conversationId: selectedChat.id });
     };
 
     // ── TYPING INDICATOR ─────────────────────────────────────────────
@@ -147,267 +185,301 @@ const Chat = () => {
         setMessage(e.target.value);
         if (!selectedChat) return;
 
-        // FIX 5: only emit typing:start once per typing session, not on every keystroke
         if (!isEmittingTyping.current) {
-            socket.emit('typing:start', { conversationId: selectedChat._id });
+            socket.emit('typing:start', { conversationId: selectedChat.id });
             isEmittingTyping.current = true;
         }
 
         clearTimeout(typingTimeout.current);
         typingTimeout.current = setTimeout(() => {
-            socket.emit('typing:stop', { conversationId: selectedChat._id });
-            // reset so next typing session emits typing:start again
+            socket.emit('typing:stop', { conversationId: selectedChat.id });
             isEmittingTyping.current = false;
         }, 1500);
     };
 
-    // ── FORMAT TIMESTAMP ─────────────────────────────────────────────
-    const formatTime = (dateStr) => {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        const now = new Date();
-        const isToday = date.toDateString() === now.toDateString();
-        return isToday
-            ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const handleSelectChat = (convo) => {
+        setSelectedChat(convo);
+        setMobileView('chat');
+    };
+
+    const handleBack = () => {
+        setMobileView('list');
     };
 
     const filteredChats = conversations.filter(convo =>
         convo.otherUser?.userName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // FIX 6: select a conversation and switch to chat view on mobile
-    const handleSelectChat = (convo) => {
-        setSelectedChat(convo);
-        setMobileView('chat');
-    };
-
-    // FIX 6: go back to conversation list on mobile
-    const handleBack = () => {
-        setMobileView('list');
-    };
+    const peerPhoto = (convo) => convo?.otherUser?.photo || avatarUrl(convo?.otherUser?.userName);
 
     // ── RENDER ───────────────────────────────────────────────────────
     return (
-        <div className="fixed inset-x-0 top-18 bottom-0 overflow-hidden">
-            <div className="max-w-6xl mx-auto h-full overflow-hidden">
-                <Helmet><title>Blabber - Chat</title></Helmet>
-                <div className="flex h-full gap-4 px-4 pt-4 pb-0 overflow-hidden">
+        <div className="mx-auto w-full max-w-6xl px-2 pt-20 pb-6 md:px-4 md:pt-24">
+            <Helmet><title>Blabber - Chat</title></Helmet>
 
-                    {/* ── SIDEBAR ── */}
-                    {/* FIX 6: on mobile, hide sidebar when a chat is open */}
+            <div className="flex h-[calc(100dvh-10rem)] min-h-[30rem] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:flex-row">
+
+                {/* ── CONVERSATIONS SIDEBAR ── */}
+                <motion.aside
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={`${mobileView === 'chat' ? 'hidden' : 'flex'} w-full shrink-0 flex-col border-b border-border/70 md:flex md:w-80 md:border-b-0 md:border-r lg:w-96`}
+                >
+                    <div className="border-b border-border/70 p-3 md:p-4">
+                        <h2 className="text-lg font-semibold">Messages</h2>
+                        <div className="relative mt-3">
+                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search conversations"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="min-h-0 flex-1 overflow-y-auto">
+                        {loading ? (
+                            Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 border-b border-border/60 px-3 py-3">
+                                    <Skeleton className="size-12 shrink-0 rounded-full" />
+                                    <div className="flex-1 space-y-2">
+                                        <Skeleton className="h-3 w-24" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : conversationsError ? (
+                            <div className="px-4 py-8 text-center text-sm text-destructive">
+                                {conversationsError}
+                            </div>
+                        ) : filteredChats.length === 0 ? (
+                            <div className="px-4 py-10 text-center">
+                                <p className="text-sm font-medium text-foreground">
+                                    {conversations.length === 0 ? 'No conversations yet' : 'No matches'}
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {conversations.length === 0
+                                        ? 'Open a profile and tap Message to start.'
+                                        : 'Try a different name.'}
+                                </p>
+                            </div>
+                        ) : (
+                            filteredChats.map((convo) => (
+                                <button
+                                    type="button"
+                                    key={convo.id}
+                                    onClick={() => handleSelectChat(convo)}
+                                    className={`flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-accent/60 focus-visible:bg-accent/60 ${
+                                        selectedChat?.id === convo.id ? 'bg-primary/10' : ''
+                                    }`}
+                                >
+                                    <div className="relative shrink-0">
+                                        <Avatar
+                                            className={`size-12 bg-linear-to-br from-primary/80 to-secondary/80 ${
+                                                convo.unread > 0
+                                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-card'
+                                                    : ''
+                                            }`}
+                                        >
+                                            <AvatarImage src={peerPhoto(convo)} alt={convo.otherUser?.userName} />
+                                            <AvatarFallback>{initials(convo.otherUser?.userName)}</AvatarFallback>
+                                        </Avatar>
+                                        {convo.unread > 0 && (
+                                            <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full bg-primary ring-2 ring-card" />
+                                        )}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-baseline justify-between gap-2">
+                                            <span className="truncate text-sm font-semibold">
+                                                {convo.otherUser?.userName}
+                                            </span>
+                                            <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                                                {formatTime(convo.lastMessage?.createdAt || convo.updatedAt)}
+                                            </span>
+                                        </div>
+                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                            {convo.lastMessage?.content || 'No messages yet'}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </motion.aside>
+
+                {/* ── THREAD ── */}
+                {selectedChat ? (
                     <motion.div
-                        initial={{ opacity: 0, x: -20 }}
+                        key={selectedChat.id}
+                        initial={{ opacity: 0, x: 12 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`${mobileView === 'chat' ? 'hidden' : 'flex'} md:flex w-full md:w-80 bg-white/8 backdrop-blur-2 border border-white/20 rounded-xl overflow-hidden flex-col`}
+                        transition={{ duration: 0.25 }}
+                        className={`${mobileView === 'list' ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-1 flex-col md:flex`}
                     >
-                        <div className="p-4 border-b border-white/10">
-                            <h2 className="text-xl font-bold mb-4">Messages</h2>
-                            <div className="relative">
-                                <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search conversations..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-primary/50"
-                                />
+                        {/* Header */}
+                        <div className="flex shrink-0 items-center gap-3 border-b border-border/70 p-3 md:p-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="md:hidden"
+                                onClick={handleBack}
+                                aria-label="Back to conversations"
+                            >
+                                <ArrowLeft />
+                            </Button>
+                            <Avatar className="size-10 shrink-0 bg-linear-to-br from-primary/80 to-secondary/80">
+                                <AvatarImage src={peerPhoto(selectedChat)} alt={selectedChat.otherUser?.userName} />
+                                <AvatarFallback>{initials(selectedChat.otherUser?.userName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold">
+                                    {selectedChat.otherUser?.userName}
+                                </p>
+                                <p className="min-h-4 text-xs text-muted-foreground">
+                                    {isTyping && <span className="animate-pulse">typing…</span>}
+                                </p>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto">
-                            {loading ? (
-                                <div className="p-4 text-center text-gray-400 text-sm">Loading...</div>
-                            ) : conversationsError ? (
-                                // FIX 2: show error message if conversations failed to load
-                                <div className="p-4 text-center text-red-400 text-sm">{conversationsError}</div>
-                            ) : (
-                                <AnimatePresence>
-                                    {filteredChats.length > 0 ? filteredChats.map((convo) => (
-                                        <motion.div
-                                            key={convo._id}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            // FIX 6: use handleSelectChat instead of setSelectedChat directly
-                                            onClick={() => handleSelectChat(convo)}
-                                            className={`p-3 border-b border-white/5 cursor-pointer transition ${selectedChat?._id === convo._id
-                                                ? 'bg-primary/20 border-primary/30'
-                                                : 'hover:bg-white/5'
-                                                }`}
+                        {/* Messages */}
+                        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6">
+                            {messagesError ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <p className="text-sm text-destructive">{messagesError}</p>
+                                </div>
+                            ) : messagesLoading ? (
+                                <div className="space-y-4">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`flex items-end gap-2 ${i % 2 ? 'justify-end' : 'justify-start'}`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-                                                    <img
-                                                        src={convo.otherUser?.photo ||
-                                                            `https://api.dicebear.com/7.x/initials/svg?seed=${convo.otherUser?.userName}`}
-                                                        alt={convo.otherUser?.userName}
-                                                        className="w-full h-full rounded-full object-cover"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-center">
-                                                        <h3 className="font-semibold text-sm">{convo.otherUser?.userName}</h3>
-                                                        <span className="text-xs opacity-60">
-                                                            {formatTime(convo.lastMessage?.createdAt || convo.updatedAt)}
+                                            {i % 2 === 0 && <Skeleton className="size-7 shrink-0 rounded-full" />}
+                                            <Skeleton className={`h-10 rounded-2xl ${i % 2 ? 'w-1/2' : 'w-2/3'}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : messages.length === 0 ? (
+                                <div className="flex h-full items-center justify-center p-6">
+                                    <div className="text-center">
+                                        <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-muted">
+                                            <MessageCircle className="size-6 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-sm font-medium">No messages yet</p>
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            Say hello to {selectedChat.otherUser?.userName} to start.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                (() => {
+                                    let prevDate = null;
+                                    let prevSender = null;
+                                    return messages.map((msg) => {
+                                        const isOwn = msg.senderId === dbUser?.id;
+                                        const firstOfDay = !prevDate || !isSameDay(prevDate, msg.createdAt);
+                                        const firstOfGroup = firstOfDay || !prevSender || prevSender !== msg.senderId;
+                                        prevDate = msg.createdAt;
+                                        prevSender = msg.senderId;
+
+                                        return (
+                                            <React.Fragment key={msg.id}>
+                                                {firstOfDay && (
+                                                    <div className="my-3 flex justify-center">
+                                                        <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                                                            {dayLabel(msg.createdAt)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs opacity-60 truncate">
-                                                        {convo.lastMessage?.content || 'No messages yet'}
-                                                    </p>
-                                                </div>
-                                                {convo.unread > 0 && (
-                                                    <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                                        {convo.unread}
-                                                    </span>
                                                 )}
-                                            </div>
-                                        </motion.div>
-                                    )) : (
-                                        <div className="p-4 text-center text-gray-400">
-                                            <p>No conversations found</p>
-                                        </div>
-                                    )}
-                                </AnimatePresence>
-                            )}
-                        </div>
-                    </motion.div>
-
-                    {/* ── CHAT WINDOW ── */}
-                    {selectedChat ? (
-                        <motion.div
-                            key={selectedChat._id}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            // FIX 6: on mobile, show chat when mobileView === 'chat', always show on md+
-                            className={`${mobileView === 'list' ? 'hidden' : 'flex'} md:flex flex-1 min-h-0 bg-white/8 backdrop-blur-2 border border-white/20 rounded-xl overflow-hidden flex-col`}
-                        >
-                            {/* Header */}
-                            <div className="p-4 border-b border-white/10 flex items-center gap-3">
-                                {/* FIX 6: back button visible only on mobile */}
-                                <button
-                                    onClick={handleBack}
-                                    className="md:hidden text-white/70 hover:text-white transition mr-1"
-                                    aria-label="Back to conversations"
-                                >
-                                    <IoArrowBack size={20} />
-                                </button>
-                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center">
-                                    <img
-                                        src={selectedChat.otherUser?.photo ||
-                                            `https://api.dicebear.com/7.x/initials/svg?seed=${selectedChat.otherUser?.userName}`}
-                                        alt={selectedChat.otherUser?.userName}
-                                        className="w-full h-full rounded-full object-cover"
-                                    />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold">{selectedChat.otherUser?.userName}</h3>
-                                    {/* {isTyping
-                                    ? <p className="text-xs text-primary animate-pulse">typing...</p>
-                                    : <p className="text-xs opacity-60"></p>
-                                } */}
-                                </div>
-                            </div>
-
-                            {/* Messages */}
-                            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-                                {/* FIX 2: show error if messages failed to load */}
-                                {messagesError ? (
-                                    <div className="flex items-center justify-center h-full">
-                                        <p className="text-red-400 text-sm">{messagesError}</p>
-                                    </div>
-                                ) : messages.length === 0 ? (
-                                    // FIX 7: empty messages state
-                                    <div className="flex items-center justify-center h-full">
-                                        <p className="text-sm opacity-40">No messages yet. Say hello! 👋</p>
-                                    </div>
-                                ) : (
-                                    <AnimatePresence>
-                                        {messages.map((msg) => {
-                                            const isOwn = msg.sender === user.uid;
-                                            return (
-                                                <motion.div
-                                                    key={msg._id}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                                                >
-                                                    <div className={`max-w-xs px-4 py-2 rounded-lg wrap-break-word ${isOwn
-                                                        ? 'bg-primary text-white rounded-br-none'
-                                                        : 'bg-white/10 text-white rounded-bl-none'
-                                                        }`}>
-                                                        <p className="text-sm">{msg.content}</p>
-                                                        <p className={`text-xs mt-1 ${isOwn ? 'opacity-70' : 'opacity-60'}`}>
+                                                <div className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                                                    {!isOwn &&
+                                                        (firstOfGroup ? (
+                                                            <Avatar className="size-7 shrink-0 bg-linear-to-br from-primary/70 to-secondary/70">
+                                                                <AvatarImage src={peerPhoto(selectedChat)} alt={selectedChat.otherUser?.userName} />
+                                                                <AvatarFallback>{initials(selectedChat.otherUser?.userName)}</AvatarFallback>
+                                                            </Avatar>
+                                                        ) : (
+                                                            <span className="w-7 shrink-0" />
+                                                        ))}
+                                                    <div
+                                                        className={`max-w-[75%] px-3.5 py-2 text-sm break-words ${
+                                                            isOwn
+                                                                ? 'rounded-2xl rounded-br-md bg-primary text-primary-foreground'
+                                                                : 'rounded-2xl rounded-bl-md bg-muted text-foreground'
+                                                        }`}
+                                                    >
+                                                        <p>{msg.content}</p>
+                                                        <p className={`mt-1 text-[10px] tabular-nums ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                                                             {formatTime(msg.createdAt)}
                                                         </p>
                                                     </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </AnimatePresence>
-                                )}
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    });
+                                })()
+                            )}
 
-                                {/* Animated typing bubble */}
-                                {isTyping && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="flex justify-start"
-                                    >
-                                        <div className="bg-white/10 px-4 py-3 rounded-lg rounded-bl-none">
-                                            <div className="flex gap-1 items-center">
-                                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce [animation-delay:0ms]" />
-                                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce [animation-delay:150ms]" />
-                                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce [animation-delay:300ms]" />
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                <div ref={bottomRef} />
-                            </div>
-
-                            {/* Input */}
-                            <div className="p-4 border-t border-white/10">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Type a message..."
-                                        value={message}
-                                        onChange={handleTyping}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        maxLength={500}
-                                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-primary/50"
-                                    />
-                                    <button
-                                        onClick={handleSendMessage}
-                                        disabled={!message.trim()}
-                                        className="bg-primary hover:bg-primary/80 disabled:opacity-50 text-white rounded-lg p-2 transition flex items-center justify-center"
-                                        aria-label="Send message"
-                                    >
-                                        <IoSendSharp size={20} />
-                                    </button>
+                            {isTyping && (
+                                <div className="mt-2 flex items-end gap-2">
+                                    <Avatar className="size-7 shrink-0 bg-linear-to-br from-primary/70 to-secondary/70">
+                                        <AvatarImage src={peerPhoto(selectedChat)} alt={selectedChat.otherUser?.userName} />
+                                        <AvatarFallback>{initials(selectedChat.otherUser?.userName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-muted px-4 py-3">
+                                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:0ms]" />
+                                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:150ms]" />
+                                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:300ms]" />
+                                    </div>
                                 </div>
-                                <p className="text-xs opacity-50 mt-2">{message.length}/500</p>
+                            )}
+
+                            <div ref={bottomRef} />
+                        </div>
+
+                        {/* Composer */}
+                        <div className="shrink-0 border-t border-border/70 p-3 md:p-4">
+                            <div className="flex items-end gap-2 rounded-2xl border border-input bg-background p-2 pl-4 transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/40">
+                                <input
+                                    type="text"
+                                    placeholder="Type a message…"
+                                    value={message}
+                                    onChange={handleTyping}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                    maxLength={500}
+                                    className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                                />
+                                <Button
+                                    size="icon"
+                                    className="rounded-full"
+                                    onClick={handleSendMessage}
+                                    disabled={!message.trim()}
+                                    aria-label="Send message"
+                                >
+                                    <Send />
+                                </Button>
                             </div>
-                        </motion.div>
-                    ) : (
-                        // Empty state — only visible on md+ since on mobile you only see the sidebar
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="hidden md:flex flex-1 bg-white/8 backdrop-blur-2 border border-white/20 rounded-xl flex-col items-center justify-center"
-                        >
-                            <div className="text-center">
-                                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                                    <IoSendSharp size={32} className="opacity-50" />
-                                </div>
-                                <h3 className="text-xl font-semibold mb-2">Select a conversation</h3>
-                                <p className="text-sm opacity-60">Choose a conversation from the sidebar to start chatting</p>
+                            <p className="mt-2 text-right text-[11px] text-muted-foreground tabular-nums">
+                                {message.length}/500
+                            </p>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <div className="hidden flex-1 items-center justify-center md:flex">
+                        <div className="px-6 text-center">
+                            <div className="mx-auto mb-3 grid size-16 place-items-center rounded-2xl bg-muted">
+                                <MessageCircle className="size-8 text-muted-foreground" />
                             </div>
-                        </motion.div>
-                    )}
-                </div>
+                            <h3 className="text-base font-semibold">Pick a conversation</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Your messages appear here.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -7,6 +7,8 @@ import Lottie from 'lottie-react';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import useAuth from '../../Hooks/useAuth';
 import useRegisterValidation from '../../Hooks/useRegisterValidation';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 const Register = () => {
     const [eye, setEye] = useState(false)
     const [conEye, setConEye] = useState(false)
@@ -58,40 +60,40 @@ const Register = () => {
                         <h1 className='text-3xl font-bold text-center'>Please Register</h1>
                         <form onSubmit={handleRegister} className='space-y-3' >
                             <div>
-                                <p className='text-accent'>Username</p>
-                                <input required name='userName' className='input w-full rounded-md input-bordered' type="text" placeholder='Enter Name' />
+                                <p className='text-muted-foreground'>Username</p>
+                                <Input required name='userName' type="text" placeholder='Enter Name' />
                             </div>
                             {/* <div>
-                                <p className='text-accent'>Phone</p>
-                                <input name='phone' className='input w-full rounded-md input-bordered' type="text" placeholder='Enter Phone Number' />
+                                <p className='text-muted-foreground'>Phone</p>
+                                <Input name='phone' type="text" placeholder='Enter Phone Number' />
                             </div> */}
                             {/* <div>
-                                <p className='text-accent'>Address</p>
-                                <input name='address' className='input w-full rounded-md input-bordered' type="text" placeholder='Enter Address' />
+                                <p className='text-muted-foreground'>Address</p>
+                                <Input name='address' type="text" placeholder='Enter Address' />
                             </div> */}
                             <div>
-                                <p className='text-accent'>Email</p>
-                                <input required name='email' className='input w-full rounded-md input-bordered' type="email" placeholder='Enter Email' />
+                                <p className='text-muted-foreground'>Email</p>
+                                <Input required name='email' type="email" placeholder='Enter Email' />
                             </div>
                             <div className='relative'>
-                                <p className='text-accent'>Password</p>
-                                <input name='password' className='input w-full rounded-md input-bordered' type={eye ? "text" : "password"} placeholder='Enter Password' />
+                                <p className='text-muted-foreground'>Password</p>
+                                <Input name='password' type={eye ? "text" : "password"} placeholder='Enter Password' className='pr-10' />
                                 {
-                                    eye ? <FaRegEyeSlash onClick={() => setEye(!eye)} size={18} className='absolute top-8 right-5' /> : <IoEyeOutline onClick={() => setEye(!eye)}
-                                        size={18} className='absolute top-8 right-5 ' />
+                                    eye ? <FaRegEyeSlash onClick={() => setEye(!eye)} size={18} className='absolute top-8 right-3' /> : <IoEyeOutline onClick={() => setEye(!eye)}
+                                        size={18} className='absolute top-8 right-3 ' />
                                 }
                             </div>
                             <div className='relative'>
-                                <p className='text-accent'>Confirm Password</p>
-                                <input name='confirmPassword' className='input w-full rounded-md input-bordered' type={conEye ? "text" : "password"} placeholder='Confirm your Password' />
+                                <p className='text-muted-foreground'>Confirm Password</p>
+                                <Input name='confirmPassword' type={conEye ? "text" : "password"} placeholder='Confirm your Password' className='pr-10' />
                                 {
-                                    conEye ? <FaRegEyeSlash onClick={() => setConEye(!conEye)} size={18} className='absolute top-8 right-5' /> : <IoEyeOutline onClick={() => setConEye(!conEye)}
-                                        size={18} className='absolute top-8 right-5 ' />
+                                    conEye ? <FaRegEyeSlash onClick={() => setConEye(!conEye)} size={18} className='absolute top-8 right-3' /> : <IoEyeOutline onClick={() => setConEye(!conEye)}
+                                        size={18} className='absolute top-8 right-3 ' />
                                 }
                             </div>
                             <p className='text-base-200 font-light text-sm'>{error}</p>
 
-                            <input className='btn btn-primary shadow-none w-full my-3' type="submit" value="Register" />
+                            <Button type="submit" size="lg" className="w-full my-3">Register</Button>
                             <p className='text-center font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/login">Login</Link></p>
                         </form>
 

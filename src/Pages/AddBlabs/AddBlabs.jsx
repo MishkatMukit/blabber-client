@@ -5,6 +5,8 @@ import Swal from 'sweetalert2';
 import useAuth from '../../Hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
+import { Button } from '../../Components/ui/button';
+import { Textarea } from '../../Components/ui/textarea';
 
 const AddBlubs = () => {
     useAuth()
@@ -24,7 +26,7 @@ const AddBlubs = () => {
             color: "white",
             showCancelButton: true,
             background: "#111827",
-            confirmButtonColor: "#3085d6",
+            confirmButtonColor: "#EA580C",
             cancelButtonColor: "#E11D48",
             confirmButtonText: "Yes"
         }).then((result) => {
@@ -58,8 +60,8 @@ const AddBlubs = () => {
     return (
         <div className="p-2 md:p-4 rounded-xl space-y-3 my-2 max-w-3xl mx-auto relative">
 
-            <textarea
-                className="textarea textarea-bordered w-full resize-none"
+            <Textarea
+                className="w-full resize-none"
                 rows="4"
                 placeholder="Start blabbering..."
                 value={text}
@@ -100,13 +102,13 @@ const AddBlubs = () => {
                         {text.length}/{maxChars}
                     </span>
 
-                    <button
+                    <Button
                         onClick={handleAddBlab}
-                        className="btn btn-sm btn-primary"
+                        size="sm"
                         disabled={!text.trim() || isPosting}
                     >
                         {isPosting ? 'Posting...' : 'Blab'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 

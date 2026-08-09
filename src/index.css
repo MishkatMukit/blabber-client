@@ -7,8 +7,8 @@
 @plugin "daisyui/theme" {
   name: "dark";
   default: true;
-  --color-primary:#E11D48 ;
-  --color-secondary: #403f3f;
+  --color-primary:#EA580C ;
+  --color-secondary: #FB923C;
   --color-base-200: #f3f3f3;
   --color-base-300: #e7e7e7;
   --color-accent: #706f6f;
@@ -51,10 +51,10 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.034 264.665);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.585 0.233 354.5);
+  --primary: oklch(0.646 0.222 41.116);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.75 0.183 55.934);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
   --accent: oklch(0.279 0.041 260.031);
@@ -62,7 +62,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.585 0.233 354.5);
+  --ring: oklch(0.646 0.222 41.116);
 }
 
 .font-poppins {
@@ -86,8 +86,8 @@ body{
 .textarea:focus {
   outline: none !important;
   background-color: #1f2937 !important;
-  border-color: #E11D48 !important;
-  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.35);
+  border-color: #EA580C !important;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.35);
 }
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

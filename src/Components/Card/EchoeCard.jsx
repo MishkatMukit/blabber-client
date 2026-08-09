@@ -12,6 +12,8 @@ import { RiDeleteBackLine } from 'react-icons/ri';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
 const EchoeCard = ({ echoe, blabId }) => {
     const queryClient = useQueryClient()
     const [showEdit, setShowEdit] = useState(false)
@@ -19,15 +21,9 @@ const EchoeCard = ({ echoe, blabId }) => {
     const [isUpdating, setIsUpdating] = useState(false);
     const { dbUser } = useAuth()
     const { mutate: applauseEchoe, isPending } = useApplauseEchoe()
-    const [isApplauded, setIsApplauded] = useState(false);
     const axiosSecure = useAxiosSecure();
     const handleApplause = () => {
-        // instant UI update
-        setIsApplauded((prev) => !prev);
-        // mutation runs in background
-        applauseEchoe({ echoId: echoe.id, blabId }, {
-            onSuccess: (result) => setIsApplauded(result?.applauded ?? false),
-        });
+        applauseEchoe({ echoId: echoe.id, blabId });
     };
     const handleEditEcho = async (id, blabId) => {
         const updatedEcho = {
@@ -53,7 +49,7 @@ const EchoeCard = ({ echoe, blabId }) => {
             icon: 'warning',
             showCancelButton: true,
             background: "#111827",
-            confirmButtonColor: "#3085d6",
+            confirmButtonColor: "#EA580C",
             cancelButtonColor: "#E11D48",
             confirmButtonText: 'Delete'
         });
@@ -145,7 +141,7 @@ const EchoeCard = ({ echoe, blabId }) => {
                             <button
                                 disabled={isPending}
                                 onClick={handleApplause}
-                                className={`cursor-pointer transition ${isApplauded ? "text-primary" : "hover:text-primary"
+                                className={`cursor-pointer transition ${echoe?.applauded ? "text-primary" : "hover:text-primary"
                                     }`}
                             >
                                 <FaHeart size={14} />
@@ -166,10 +162,10 @@ const EchoeCard = ({ echoe, blabId }) => {
                                 style={{ overflow: 'hidden' }}
                             >
                                 <h2 className='text-xs divider'>Edit Echoe</h2>
-                                <textarea rows={2} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedEcho" defaultValue={echoe?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
+                                <Textarea rows={2} className="mt-2" name="editedEcho" defaultValue={echoe?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
                                 <div className='flex gap-1 justify-end'>
-                                    <button onClick={() => setShowEdit(false)} className='btn btn-xs btn-secondary'>Cancel</button>
-                                    <button onClick={() => handleEditEcho(echoe.id, echoe.blabId)} disabled={isUpdating} className='btn btn-xs btn-primary'>{isUpdating ? 'Updating...' : 'Update'}</button>
+                                    <Button onClick={() => setShowEdit(false)} variant="ghost" size="sm">Cancel</Button>
+                                    <Button onClick={() => handleEditEcho(echoe.id, echoe.blabId)} disabled={isUpdating} size="sm">{isUpdating ? 'Updating...' : 'Update'}</Button>
                                 </div>
                             </motion.div>
                         )}

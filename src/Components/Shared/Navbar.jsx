@@ -8,6 +8,7 @@ import { FaBars, FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/logo.png';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 const Navbar = () => {
     const { user, dbUser, logOutUser } = useAuth()
     const [visible, setVisible] = useState(true);
@@ -55,7 +56,7 @@ const Navbar = () => {
             color: "white",
             showCancelButton: true,
             background: "#111827",
-            confirmButtonColor: "#3085d6",
+            confirmButtonColor: "#EA580C",
             cancelButtonColor: "#E11D48",
             confirmButtonText: "Yes, Logout"
         }).then(async (result) => {
@@ -114,16 +115,17 @@ const Navbar = () => {
                     </ul>
                     <div className="dropdown dropdown-end mx-2">
                         <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                            <div className="w-10 rounded-full">
-                                {
-                                    dbUser ? <img
-                                        alt="User avatar"
-                                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}`} /> : <img
-                                        alt="User avatar"
-                                        src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
-                                }
-
-                            </div>
+                            <Avatar className="size-10">
+                                <AvatarImage
+                                    alt="User avatar"
+                                    src={
+                                        dbUser
+                                            ? `https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}`
+                                            : "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                                    }
+                                />
+                                <AvatarFallback>{(dbUser?.userName || "U").slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
                         </label>
 
                         <ul tabIndex={0} className="menu dropdown-content bg-white/8 backdrop-blur-2 rounded-box mt-4" role="menu">

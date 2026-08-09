@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import axiosPublic from "../../Hooks/useAxiosPublic";
 import getMe from "../../API/getMe";
+import socket from "../../Hooks/socket";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null);
@@ -14,6 +15,9 @@ const AuthProvider = ({ children }) => {
         const currentUser = session?.user || session || null;
         setUser(currentUser);
         setDbuser(currentUser?.profile || null);
+        if (currentUser) {
+            socket.connect();
+        }
         return currentUser;
     };
 
@@ -40,6 +44,7 @@ const AuthProvider = ({ children }) => {
         } catch {
             // logout is stateless; clear local state regardless
         } finally {
+            socket.disconnect();
             setUser(null);
             setDbuser(null);
         }

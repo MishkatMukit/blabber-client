@@ -14,13 +14,14 @@ import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import { HiDotsHorizontal } from 'react-icons/hi';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
 const BlabCard = ({ blab, page }) => {
     const [showEdit, setShowEdit] = useState(false)
     const [editedText, setEditedText] = useState(blab?.content)
     const [, setIsUpdating] = useState(false);
     const { user, dbUser } = useAuth()
     const { mutate: applauseBlab, isPending } = useApplause(page)
-    const [isApplauded, setIsApplauded] = useState(false);
     const queryClient = useQueryClient();
     const axiosSecure = useAxiosSecure()
     const navigate = useNavigate()
@@ -31,13 +32,7 @@ const BlabCard = ({ blab, page }) => {
             return
         }
 
-        // instant UI update
-        setIsApplauded((prev) => !prev);
-
-        // mutation runs in background
-        applauseBlab(blab.id, {
-            onSuccess: (result) => setIsApplauded(result?.applauded ?? false),
-        });
+        applauseBlab(blab.id);
     };
     const handleDelete = async (id) => {
         const result = await Swal.fire({
@@ -47,7 +42,7 @@ const BlabCard = ({ blab, page }) => {
             showCancelButton: true,
             background: "#111827",
             color: "white",
-            confirmButtonColor: "#3085d6",
+            confirmButtonColor: "#EA580C",
             cancelButtonColor: "#E11D48",
             confirmButtonText: "Yes, delete it!"
         });
@@ -161,8 +156,8 @@ const BlabCard = ({ blab, page }) => {
 
                                     disabled={isPending}
                                     onClick={handleApplause}
-                                    aria-label={isApplauded ? "Remove applause from this blab" : "Give applause to this blab"}
-                                    className={`cursor-pointer transition ${isApplauded ? "text-primary" : ""}`}
+                                    aria-label={blab?.applauded ? "Remove applause from this blab" : "Give applause to this blab"}
+                                    className={`cursor-pointer transition ${blab?.applauded ? "text-primary" : ""}`}
                                 >
                                     <FaHeart size={18} />
                                 </button>
@@ -188,10 +183,10 @@ const BlabCard = ({ blab, page }) => {
                                 style={{ overflow: 'hidden' }}
                             >
                                 <h2 className='text-xs divider'>Edit Blab</h2>
-                                <textarea rows={3} className='w-full mt-2 bg-white/10 rounded-sm p-1' name="editedEcho" defaultValue={blab?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
+                                <Textarea rows={3} className="mt-2" name="editedEcho" defaultValue={blab?.content} onChange={(e) => setEditedText(e.target.value)} id="" />
                                 <div className='flex gap-1  justify-end'>
-                                    <button onClick={() => setShowEdit(false)} className=' btn btn-xs btn-secondary'>Cancel </button>
-                                    <button onClick={() => handleEditBlab(blab.id)} className=' btn btn-xs btn-primary'>Update</button>
+                                    <Button onClick={() => setShowEdit(false)} variant="ghost" size="sm">Cancel</Button>
+                                    <Button onClick={() => handleEditBlab(blab.id)} size="sm">Update</Button>
                                 </div>
                             </motion.div>
                         )}

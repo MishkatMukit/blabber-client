@@ -7,6 +7,8 @@ import { IoEyeOutline } from 'react-icons/io5';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import Swal from 'sweetalert2';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 const Login = () => {
     const [error, setError] = useState("");
@@ -53,20 +55,20 @@ const Login = () => {
                             <h1 className='text-3xl font-medium text-center'>Please Login</h1>
                             <form className='space-y-3' onSubmit={handleLogin}>
                                 <div>
-                                    <p className='text-accent'>Email</p>
-                                    <input required name='email' className='input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary' type="text" placeholder='Enter Email' />
+                                    <p className='text-muted-foreground'>Email</p>
+                                    <Input required name='email' type="text" placeholder='Enter Email' />
                                 </div>
                                 <div className='relative'>
-                                    <p className='text-accent'>Password</p>
-                                    <input required name='password' className='input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary' type={eye ? "text" : "password"} placeholder='Enter Password' />
+                                    <p className='text-muted-foreground'>Password</p>
+                                    <Input required name='password' type={eye ? "text" : "password"} placeholder='Enter Password' className='pr-10' />
                                     {
-                                        eye ? <FaRegEyeSlash onClick={() => setEye(!eye)} size={18} className='absolute top-8 right-5' /> : <IoEyeOutline onClick={() => setEye(!eye)}
-                                            size={18} className='absolute top-8 right-5 ' />
+                                        eye ? <FaRegEyeSlash onClick={() => setEye(!eye)} size={18} className='absolute top-8 right-3' /> : <IoEyeOutline onClick={() => setEye(!eye)}
+                                            size={18} className='absolute top-8 right-3 ' />
                                     }
                                 </div>
-                                <p className='text-basse-200 text-sm'>{error}</p>
+                                <p className='text-base-200 text-sm'>{error}</p>
                                 <Link to="/forgetpassword" className='text-base-200 underline'>Forgot Password?</Link>
-                                <input className='btn btn-primary shadow-none w-full my-3' type="submit" />
+                                <Button type="submit" size="lg" className="w-full my-3">Login</Button>
                                 <p className='text-center text-base-200 font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/register">Register</Link></p>
                             </form>
                             <div className="divider">OR</div>

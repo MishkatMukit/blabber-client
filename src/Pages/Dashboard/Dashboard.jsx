@@ -16,7 +16,9 @@ import { Input } from "../../Components/ui/input";
 import { Label } from "../../Components/ui/label";
 import { Textarea } from "../../Components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "../../Components/ui/avatar";
+import { SquarePen } from "lucide-react";
 import { uploadImageToCloudinary } from "../../lib/cloudinary";
+import { formatJoinedDate } from "../../lib/utils";
 const Dashboard = () => {
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false);
@@ -70,8 +72,17 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <Card className="rounded-2xl p-0">
+        <Card className="rounded-2xl p-0 relative">
           <CardContent className="p-4 md:p-6">
+            <Button
+              onClick={() => setShowEditProfile(!showEditProfile)}
+              variant="ghost"
+              size="icon"
+              aria-label={showEditProfile ? "Cancel editing profile" : "Edit profile"}
+              className="absolute top-3 right-3 md:top-4 md:right-4"
+            >
+              <SquarePen className="size-4" />
+            </Button>
             <div className="flex items-center gap-4 md:gap-6">
               <Avatar className="size-12 md:size-20 ring-2 ring-ring ring-offset-2 ring-offset-background">
                 <AvatarImage
@@ -115,18 +126,13 @@ const Dashboard = () => {
                         </motion.p>
                       )}
                     </AnimatePresence>
-                    <Button
-                      onClick={() => setShowEditProfile(!showEditProfile)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {showEditProfile ? 'Cancel Edit' : 'Edit Profile'}
-                    </Button>
                   </div>
 
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Joined {new Date(dbUser?.createdAt).toDateString()}
-                  </p>
+                  {formatJoinedDate(dbUser?.createdAt) && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Joined {formatJoinedDate(dbUser?.createdAt)}
+                    </p>
+                  )}
               </div>
             </div>
 

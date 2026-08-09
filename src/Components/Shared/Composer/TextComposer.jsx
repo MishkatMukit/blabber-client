@@ -5,6 +5,8 @@ import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import EmojiPicker from 'emoji-picker-react';
 import useAxiosSecure from '../../../Hooks/useAxiosSecure';
 import { toast } from 'react-toastify';
+import { Button } from '../../ui/button';
+import { Textarea } from '../../ui/textarea';
 
 const TextComposer = ({ blabId }) => {
 
@@ -33,8 +35,8 @@ const TextComposer = ({ blabId }) => {
     }
     return (
         <div className=" rounded-xl space-y-3 max-w-2xl relative ">
-            <textarea
-                className="textarea textarea-bordered w-full resize-none"
+            <Textarea
+                className="w-full resize-none"
                 rows="2"
                 placeholder="Create echo..."
                 value={text}
@@ -75,13 +77,13 @@ const TextComposer = ({ blabId }) => {
                         {text.length}/{maxChars}
                     </span>
 
-                    <button
+                    <Button
                         onClick={handleAddBlab}
-                        className="btn btn-sm md:btn-md btn-primary"
+                        size="sm"
                         disabled={!text.trim() || isPosting}
                     >
                         {isPosting ? 'Posting...' : 'Echo'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 

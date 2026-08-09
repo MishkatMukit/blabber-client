@@ -5,6 +5,7 @@ import AddBlabs from '../AddBlabs/AddBlabs';
 import { useState } from 'react';
 import useAuth from '../../Hooks/useAuth';
 import { Helmet } from 'react-helmet-async';
+import { Button } from '../../Components/ui/button';
 // import { div } from 'motion/react-client';
 const AllBlubs = () => {
     const [page, setPage] = useState(1);
@@ -48,31 +49,34 @@ const AllBlubs = () => {
             }><AllBlabCard allBlabsPromise={allBlabsPromise()}></AllBlabCard></Suspense> */}
             <div className="flex flex-wrap justify-center gap-2 pb-10 mt-6">
 
-                <button
+                <Button
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="btn btn-sm bg-white/20 border-none shadow-none"
+                    variant="outline"
+                    size="sm"
                 >
                     Prev
-                </button>
+                </Button>
 
                 {[...Array(totalPages)].map((_, i) => (
-                    <button
+                    <Button
                         key={i}
                         onClick={() => setPage(i + 1)}
-                        className={`btn  btn-sm ${page === i + 1 ? "btn-primary" : "bg-white/20 border-none shadow-none"}`}
+                        variant={page === i + 1 ? "default" : "outline"}
+                        size="sm"
                     >
                         {i + 1}
-                    </button>
+                    </Button>
                 ))}
 
-                <button
+                <Button
                     onClick={() => setPage(page + 1)}
                     disabled={page === totalPages}
-                    className="btn btn-sm bg-white/20 border-none shadow-none"
+                    variant="outline"
+                    size="sm"
                 >
                     Next
-                </button>
+                </Button>
 
             </div>
         </div>

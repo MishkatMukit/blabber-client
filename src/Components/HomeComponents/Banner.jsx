@@ -2,6 +2,7 @@ import React from 'react';
 // eslint-disable-next-line no-unused-vars
 import { easeInOut, motion } from "motion/react"
 import { Link } from 'react-router';
+import { Button } from '../ui/button';
 
 const Banner = () => {
     return (
@@ -20,9 +21,11 @@ const Banner = () => {
                     </p>
 
                     <div className="flex flex-col items-center sm:flex-row gap-4 md:justify-start justify-center">
-                        <Link to="/allBlabs" className="btn btn-primary px-8">
-                            Start Blabbering
-                        </Link>
+                        <Button asChild size="lg" className="px-8">
+                            <Link to="/allBlabs">
+                                Start Blabbering
+                            </Link>
+                        </Button>
 
                     </div>
                 </div>
