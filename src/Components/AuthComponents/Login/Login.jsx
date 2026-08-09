@@ -1,7 +1,7 @@
 import { use, useState } from 'react';
 import Lottie from 'lottie-react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { IoEyeOutline } from 'react-icons/io5';
 import { FcGoogle } from 'react-icons/fc';
@@ -38,13 +38,7 @@ const Login = () => {
         }
         console.log(email, password);
         logInUser(email, password).then((result) => {
-            Swal.fire({
-                position: "center",
-                icon: "success",
-                title: "SignIn successful",
-                showConfirmButton: false,
-                timer: 1500
-            });
+            toast.success('SignIn successful');
             setUser(result)
             // navigate("/")
             navigate(location.state ? location.state : "/")

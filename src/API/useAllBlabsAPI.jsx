@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosPublic from "../Hooks/useAxiosPublic";
 
-const useAllBlabsAPI = (page, limit) => useQuery({
-  queryKey: ["allBlabs", page],
+const useAllBlabsAPI = (page, limit, search = "") => useQuery({
+  queryKey: ["allBlabs", page, search],
   queryFn: async () => {
-    const response = await axiosPublic.get(`/blabs?page=${page}&limit=${limit}`);
+    const params = new URLSearchParams({ page, limit });
+    if (search) params.set("search", search);
+    const response = await axiosPublic.get(`/blabs?${params}`);
     return response.data;
   },
   placeholderData: (previousData) => previousData,

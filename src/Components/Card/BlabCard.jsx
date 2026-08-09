@@ -10,14 +10,16 @@ import { FiEdit } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router';
 import { RiDeleteBackLine } from "react-icons/ri";
-import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import { HiDotsHorizontal } from 'react-icons/hi';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 const BlabCard = ({ blab, page }) => {
     const [showEdit, setShowEdit] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const [editedText, setEditedText] = useState(blab?.content)
     const [, setIsUpdating] = useState(false);
     const { user, dbUser } = useAuth()
@@ -35,31 +37,20 @@ const BlabCard = ({ blab, page }) => {
         applauseBlab(blab.id);
     };
     const handleDelete = async (id) => {
-        const result = await Swal.fire({
-            title: "Delete Blab?",
-            text: "This action cannot be undone.",
-            icon: "warning",
-            showCancelButton: true,
-            background: "#111827",
-            color: "white",
-            confirmButtonColor: "#EA580C",
-            cancelButtonColor: "#E11D48",
-            confirmButtonText: "Yes, delete it!"
-        });
-
-        if (!result.isConfirmed) return;
-
-        const res = await axiosSecure.delete(`/blabs/${id}`);
-        if (res.data.success) {
-            await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
-            await queryClient.invalidateQueries({ queryKey: ["myBlabs"] });
-            await Swal.fire({
-                color: "white",
-                title: "Deleted!",
-                text: "Your blab has been deleted.",
-                icon: "success"
-            });
-            navigate('/allblabs');
+        setDeleting(true);
+        try {
+            const res = await axiosSecure.delete(`/blabs/${id}`);
+            if (res.data.success) {
+                await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
+                await queryClient.invalidateQueries({ queryKey: ["myBlabs"] });
+                setShowDeleteConfirm(false);
+                toast.success('Blab deleted successfully');
+                navigate('/allblabs');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete blab');
+        } finally {
+            setDeleting(false);
         }
     }
     const handleEditBlab = async (id) => {
@@ -101,7 +92,7 @@ const BlabCard = ({ blab, page }) => {
                                 className="w-8 h-8 md:w-10 md:h-10 rounded-full"
                             />
                             <div>
-                                <p className="font-semibold text-sm md:text-base">@{blab.author?.userName}</p>
+                                <p className="font-semibold text-sm md:text-base">{blab.author?.userName}</p>
                                 <p className="text-xs opacity-60">
                                     {new Date(blab.createdAt).toLocaleString()}
                                 </p>
@@ -127,7 +118,7 @@ const BlabCard = ({ blab, page }) => {
                                         role="menu"
                                     >
                                         <li role="menuitem" onClick={() => setShowEdit(!showEdit)}><a>Edit <BiEdit aria-hidden="true"></BiEdit></a></li>
-                                        <li role="menuitem" onClick={() => handleDelete(blab.id)}><a>Delete<RiDeleteBackLine aria-hidden="true" /></a></li>
+                                        <li role="menuitem" onClick={() => setShowDeleteConfirm(true)}><a>Delete<RiDeleteBackLine aria-hidden="true" /></a></li>
                                     </ul>
                                 </div>
                             }
@@ -191,6 +182,20 @@ const BlabCard = ({ blab, page }) => {
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Delete Blab?</DialogTitle>
+                                <DialogDescription>This action cannot be undone.</DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                                <Button variant="destructive" onClick={() => handleDelete(blab.id)} disabled={deleting}>
+                                    {deleting ? 'Deleting...' : 'Delete'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </motion.div>
         </AnimatePresence>

@@ -35,7 +35,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "/blabdetails/:id",
-                element: <PrivateRoute><BlabDetails></BlabDetails></PrivateRoute>
+                element: <BlabDetails></BlabDetails>
             },
             {
                 path: "/addBlabs",

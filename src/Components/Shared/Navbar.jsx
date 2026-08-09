@@ -5,13 +5,16 @@ import { Link, NavLink } from 'react-router';
 import useAuth from '../../Hooks/useAuth';
 import { IoIosAdd, IoMdLogIn } from 'react-icons/io';
 import { FaBars, FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
-import Swal from 'sweetalert2';
 import { useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/logo.png';
+import { toast } from 'react-toastify';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 const Navbar = () => {
     const { user, dbUser, logOutUser } = useAuth()
     const [visible, setVisible] = useState(true);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const lastScrollY = useRef(0);
     const ticking = useRef(false);
     const queryClient = useQueryClient()
@@ -48,31 +51,11 @@ const Navbar = () => {
 
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
-    const handleLogout = () => {
-        Swal.fire({
-            title: "Are you sure?",
-            text: "You won't be able to revert this!",
-            icon: "warning",
-            color: "white",
-            showCancelButton: true,
-            background: "#111827",
-            confirmButtonColor: "#EA580C",
-            cancelButtonColor: "#E11D48",
-            confirmButtonText: "Yes, Logout"
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await logOutUser()
-                queryClient.clear();
-                Swal.fire({
-                    title: "Logged out",
-                    text: "Successfully Logged out from Blabber!",
-                    icon: "success",
-                    background: "#111827",
-                    color: "white"
-                });
-            }
-        });
-
+    const handleLogout = async () => {
+        await logOutUser()
+        queryClient.clear();
+        setShowLogoutConfirm(false);
+        toast.success("Successfully Logged out from Blabber!");
     }
     return (
         <div className={` fixed  w-full top-0 z-50 transition-transform duration-300 ${visible ? "translate-y-0" : "-translate-y-full"
@@ -132,7 +115,7 @@ const Navbar = () => {
                             <li><Link to="/dashboard">Profile <FaRegUserCircle size={18} /></Link></li>
                             <li>
                                 {
-                                    user ? <button onClick={handleLogout}>Logout<FaPowerOff /></button> : <Link to="/login">Login <IoMdLogIn size={20} /></Link>
+                                    user ? <button onClick={() => setShowLogoutConfirm(true)}>Logout<FaPowerOff /></button> : <Link to="/login">Login <IoMdLogIn size={20} /></Link>
                                 }
                             </li>
                         </ul>
@@ -140,6 +123,18 @@ const Navbar = () => {
                 </div>
 
             </div >
+            <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure?</DialogTitle>
+                        <DialogDescription>You won't be able to revert this!</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>Cancel</Button>
+                        <Button variant="default" onClick={handleLogout}>Yes, Logout</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 };

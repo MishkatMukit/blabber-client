@@ -3,14 +3,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router';
-import { Search, Send, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Search, Send, ArrowLeft, MessageCircle, UserRoundPlus, MoreVertical, Trash2 } from 'lucide-react';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import useAuth from '../../Hooks/useAuth';
 import socket from '../../Hooks/socket';
+import { toast } from 'react-toastify';
 import { Avatar, AvatarImage, AvatarFallback } from '../../Components/ui/avatar';
 import { Button } from '../../Components/ui/button';
 import { Input } from '../../Components/ui/input';
 import { Skeleton } from '../../Components/ui/skeleton';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '../../Components/ui/dialog';
 
 const avatarUrl = (seed) => `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
 const initials = (name) => (name || '?').slice(0, 2).toUpperCase();
@@ -39,6 +48,16 @@ const formatTime = (dateStr) => {
         : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 };
 
+const formatMessageTime = (dateStr) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
+
 const Chat = () => {
     const axiosSecure = useAxiosSecure();
     const { dbUser } = useAuth();
@@ -49,6 +68,9 @@ const Chat = () => {
     const [message, setMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [userResults, setUserResults] = useState([]);
+    const [userSearching, setUserSearching] = useState(false);
+
     const [conversations, setConversations] = useState([]);
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
@@ -58,10 +80,15 @@ const Chat = () => {
     const [messagesError, setMessagesError] = useState(null);
     const [mobileView, setMobileView] = useState('list');
 
+    const [openMenuId, setOpenMenuId] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
     const bottomRef = useRef(null);
     const typingTimeout = useRef(null);
     const selectedChatRef = useRef(selectedChat);
     const isEmittingTyping = useRef(false);
+    const menuRefs = useRef({});
 
     useEffect(() => {
         selectedChatRef.current = selectedChat;
@@ -75,6 +102,21 @@ const Chat = () => {
         }
     }, [location.state?.conversation]);
 
+    // ── CLOSE OPEN MENU ON OUTSIDE CLICK ──────────────────────────
+    useEffect(() => {
+        if (!openMenuId) return;
+
+        const handleClickOutside = (e) => {
+            const menuEl = menuRefs.current[openMenuId];
+            if (menuEl && !menuEl.contains(e.target)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [openMenuId]);
+
     // ── LOAD CONVERSATIONS ON PAGE OPEN ─────────────────────────────
     useEffect(() => {
         axiosSecure.get('/conversations')
@@ -85,6 +127,22 @@ const Chat = () => {
             .catch(() => setConversationsError('Failed to load conversations. Please refresh.'))
             .finally(() => setLoading(false));
     }, [axiosSecure]);
+
+    // ── USER SEARCH (DEBOUNCED) ──────────────────────────────────────
+    useEffect(() => {
+        const q = searchQuery.trim();
+        if (!q) return;
+
+        const timer = setTimeout(() => {
+            setUserSearching(true);
+            axiosSecure.get(`/users/search?q=${encodeURIComponent(q)}`)
+                .then(res => setUserResults(res.data.data))
+                .catch(() => setUserResults([]))
+                .finally(() => setUserSearching(false));
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, axiosSecure]);
 
     // ── WHEN USER CLICKS A CONVERSATION ─────────────────────────────
     useEffect(() => {
@@ -151,11 +209,17 @@ const Chat = () => {
         socket.on('typing:start', () => setIsTyping(true));
         socket.on('typing:stop', () => setIsTyping(false));
 
+        socket.on('conversation:deleted', ({ conversationId }) => {
+            setConversations(prev => prev.filter(chat => chat.id !== conversationId));
+            setSelectedChat(prev => (prev?.id === conversationId ? null : prev));
+        });
+
         return () => {
             socket.off('message:new');
             socket.off('unread:update');
             socket.off('typing:start');
             socket.off('typing:stop');
+            socket.off('conversation:deleted');
         };
     }, [selectedChat?.id]);
 
@@ -202,12 +266,52 @@ const Chat = () => {
         setMobileView('chat');
     };
 
+    const handleDeleteConversation = async () => {
+        if (!deleteTarget) return;
+
+        setDeleting(true);
+        try {
+            await axiosSecure.delete(`/conversations/${deleteTarget.id}`);
+            setConversations(prev => prev.filter(c => c.id !== deleteTarget.id));
+            if (selectedChat?.id === deleteTarget.id) {
+                setSelectedChat(null);
+                setMessages([]);
+            }
+            setDeleteTarget(null);
+            setOpenMenuId(null);
+            toast.success('Conversation deleted');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete conversation');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const handleStartChat = async (user) => {
+        try {
+            const res = await axiosSecure.post('/conversations', { recipientId: user.id });
+            const conversation = res.data.data;
+            setConversations(prev =>
+                prev.some(c => c.id === conversation.id) ? prev : [conversation, ...prev]
+            );
+            setSearchQuery('');
+            setUserResults([]);
+            handleSelectChat(conversation);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to start conversation');
+        }
+    };
+
     const handleBack = () => {
         setMobileView('list');
     };
 
     const filteredChats = conversations.filter(convo =>
         convo.otherUser?.userName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const newUsers = userResults.filter(
+        user => user.id !== dbUser?.id && !conversations.some(convo => convo.otherUser?.id === user.id)
     );
 
     const peerPhoto = (convo) => convo?.otherUser?.photo || avatarUrl(convo?.otherUser?.userName);
@@ -240,6 +344,50 @@ const Chat = () => {
                     </div>
 
                     <div className="min-h-0 flex-1 overflow-y-auto">
+                        {/* User search results */}
+                        {searchQuery.trim() && (
+                            <div className="border-b border-border/60">
+                                <div className="px-3 pt-3 pb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                                    People
+                                </div>
+                                {userSearching ? (
+                                    <div className="space-y-2 px-3 py-2">
+                                        {Array.from({ length: 2 }).map((_, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <Skeleton className="size-10 shrink-0 rounded-full" />
+                                                <Skeleton className="h-3 w-24" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : newUsers.length > 0 ? (
+                                    newUsers.map(user => (
+                                        <button
+                                            type="button"
+                                            key={user.id}
+                                            onClick={() => handleStartChat(user)}
+                                            className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60"
+                                        >
+                                            <Avatar className="size-10 shrink-0 bg-linear-to-br from-primary/80 to-secondary/80">
+                                                <AvatarImage src={user.photo || avatarUrl(user.userName)} alt={user.userName} />
+                                                <AvatarFallback>{initials(user.userName)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-semibold">{user.userName}</p>
+                                                <p className="text-xs text-muted-foreground">Start a conversation</p>
+                                            </div>
+                                            <UserRoundPlus className="size-4 shrink-0 text-muted-foreground" />
+                                        </button>
+                                    ))
+                                ) : (
+                                    !userSearching && (
+                                        <div className="px-3 py-3 text-xs text-muted-foreground">
+                                            No users found
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+
                         {loading ? (
                             Array.from({ length: 4 }).map((_, i) => (
                                 <div key={i} className="flex items-center gap-3 border-b border-border/60 px-3 py-3">
@@ -267,11 +415,13 @@ const Chat = () => {
                             </div>
                         ) : (
                             filteredChats.map((convo) => (
-                                <button
-                                    type="button"
+                                <div
                                     key={convo.id}
                                     onClick={() => handleSelectChat(convo)}
-                                    className={`flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-accent/60 focus-visible:bg-accent/60 ${
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSelectChat(convo)}
+                                    className={`flex w-full cursor-pointer items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-accent/60 focus-visible:bg-accent/60 ${
                                         selectedChat?.id === convo.id ? 'bg-primary/10' : ''
                                     }`}
                                 >
@@ -304,7 +454,43 @@ const Chat = () => {
                                             {convo.lastMessage?.content || 'No messages yet'}
                                         </p>
                                     </div>
-                                </button>
+
+                                    <span
+                                        ref={(el) => (menuRefs.current[convo.id] = el)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="relative shrink-0 self-center"
+                                    >
+                                        <button
+                                            type="button"
+                                            aria-label={`Options for ${convo.otherUser?.userName}`}
+                                            aria-haspopup="menu"
+                                            aria-expanded={openMenuId === convo.id}
+                                            onClick={() => setOpenMenuId(openMenuId === convo.id ? null : convo.id)}
+                                            className="grid size-8 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:outline-none"
+                                        >
+                                            <MoreVertical className="size-4" />
+                                        </button>
+                                        {openMenuId === convo.id && (
+                                            <div
+                                                role="menu"
+                                                className="absolute top-full right-full z-20 mr-1 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={() => {
+                                                        setOpenMenuId(null);
+                                                        setDeleteTarget(convo);
+                                                    }}
+                                                    className="flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs text-destructive transition-colors hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none"
+                                                >
+                                                    <Trash2 className="size-3.5" />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
+                                    </span>
+                                </div>
                             ))
                         )}
                     </div>
@@ -394,7 +580,7 @@ const Chat = () => {
                                                         </span>
                                                     </div>
                                                 )}
-                                                <div className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`my-1 flex items-end gap-2 ${firstOfGroup ? 'mt-2.5' : ''} ${isOwn ? 'justify-end' : 'justify-start'}`}>
                                                     {!isOwn &&
                                                         (firstOfGroup ? (
                                                             <Avatar className="size-7 shrink-0 bg-linear-to-br from-primary/70 to-secondary/70">
@@ -412,8 +598,8 @@ const Chat = () => {
                                                         }`}
                                                     >
                                                         <p>{msg.content}</p>
-                                                        <p className={`mt-1 text-[10px] tabular-nums ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                                                            {formatTime(msg.createdAt)}
+                                                        <p className={`mt-1 text-[9px] tabular-nums ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                                                            {formatMessageTime(msg.createdAt)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -481,6 +667,27 @@ const Chat = () => {
                     </div>
                 )}
             </div>
+
+            {/* ── DELETE CONVERSATION CONFIRM ── */}
+            <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete conversation?</DialogTitle>
+                        <DialogDescription>
+                            Delete the conversation with {deleteTarget?.otherUser?.userName}? This
+                            action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteConversation} disabled={deleting}>
+                            {deleting ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

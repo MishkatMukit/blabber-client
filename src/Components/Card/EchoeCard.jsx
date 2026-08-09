@@ -11,12 +11,14 @@ import { MdDelete } from 'react-icons/md';
 import { RiDeleteBackLine } from 'react-icons/ri';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
-import Swal from 'sweetalert2';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 const EchoeCard = ({ echoe, blabId }) => {
     const queryClient = useQueryClient()
     const [showEdit, setShowEdit] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const [editedText, setEditedText] = useState(echoe?.content)
     const [isUpdating, setIsUpdating] = useState(false);
     const { dbUser } = useAuth()
@@ -42,27 +44,17 @@ const EchoeCard = ({ echoe, blabId }) => {
         }
     }
     const handleDeleteEcho = async (id, blabId) => {
-        const result = await Swal.fire({
-            title: 'Delete Echo?',
-            text: 'This action cannot be undone.',
-            color: "white",
-            icon: 'warning',
-            showCancelButton: true,
-            background: "#111827",
-            confirmButtonColor: "#EA580C",
-            cancelButtonColor: "#E11D48",
-            confirmButtonText: 'Delete'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await axiosSecure.delete(`/echo/${id}`);
-                await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
-                await queryClient.invalidateQueries({ queryKey: ["blab", blabId] });
-                await queryClient.invalidateQueries({ queryKey: ["echoes", blabId] });
-            } catch {
-                Swal.fire('Error!', 'Failed to delete echo.', 'error');
-            }
+        setDeleting(true);
+        try {
+            await axiosSecure.delete(`/echo/${id}`);
+            setShowDeleteConfirm(false);
+            await queryClient.invalidateQueries({ queryKey: ["allBlabs"] });
+            await queryClient.invalidateQueries({ queryKey: ["blab", blabId] });
+            await queryClient.invalidateQueries({ queryKey: ["echoes", blabId] });
+        } catch {
+            toast.error('Failed to delete echo');
+        } finally {
+            setDeleting(false);
         }
     }
     return (
@@ -83,7 +75,7 @@ const EchoeCard = ({ echoe, blabId }) => {
                                 className="w-8 h-8   rounded-full"
                             />
                             <div>
-                                <p className="font-semibold text-xs">@{echoe.author?.userName}</p>
+                                <p className="font-semibold text-xs">{echoe.author?.userName}</p>
                                 <p className="text-xs opacity-60">
                                     {new Date(echoe.createdAt).toLocaleString()}
                                 </p>
@@ -113,7 +105,7 @@ const EchoeCard = ({ echoe, blabId }) => {
                                                 role="menu"
                                             >
                                                 <li role="menuitem" onClick={() => setShowEdit(!showEdit)}><a>Edit <BiEdit aria-hidden="true"></BiEdit></a></li>
-                                                <li role="menuitem" onClick={() => handleDeleteEcho(echoe.id, echoe.blabId)}><a>Delete<RiDeleteBackLine aria-hidden="true" /></a></li>
+                                                <li role="menuitem" onClick={() => setShowDeleteConfirm(true)}><a>Delete<RiDeleteBackLine aria-hidden="true" /></a></li>
                                             </ul>
                                         </div>
                                     }
@@ -170,6 +162,20 @@ const EchoeCard = ({ echoe, blabId }) => {
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Delete Echo?</DialogTitle>
+                                <DialogDescription>This action cannot be undone.</DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                                <Button variant="destructive" onClick={() => handleDeleteEcho(echoe.id, blabId)} disabled={deleting}>
+                                    {deleting ? 'Deleting...' : 'Delete'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </motion.div>
         </AnimatePresence>

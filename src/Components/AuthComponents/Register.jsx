@@ -1,21 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { IoEyeOutline } from 'react-icons/io5';
-import Swal from 'sweetalert2';
-import lottieRegister from "../../assets/register.json"
-import Lottie from 'lottie-react';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import useAuth from '../../Hooks/useAuth';
 import useRegisterValidation from '../../Hooks/useRegisterValidation';
+import useDebounce from '../../Hooks/useDebounce';
+import axiosPublic from '../../Hooks/useAxiosPublic';
+import { toast } from 'react-toastify';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 const Register = () => {
     const [eye, setEye] = useState(false)
     const [conEye, setConEye] = useState(false)
+    const [username, setUsername] = useState("")
+    const [usernameTaken, setUsernameTaken] = useState(false)
+    const [checkingUsername, setCheckingUsername] = useState(false)
+    const debouncedUsername = useDebounce(username, 400)
     const { registerUser } = useAuth()
     const { error, setError, validateForm } = useRegisterValidation()
 
     const navigate = useNavigate()
+
+    useEffect(() => {
+        const q = debouncedUsername.trim()
+        if (
+            q.length < 2 ||
+            q.length > 20 ||
+            !/^[a-zA-Z0-9_]+$/.test(q) ||
+            q.includes("__") ||
+            q.startsWith("_") ||
+            q.endsWith("_") ||
+            q.includes(" ")
+        ) {
+            setUsernameTaken(false)
+            setCheckingUsername(false)
+            return
+        }
+
+        let cancelled = false
+        setCheckingUsername(true)
+        axiosPublic.get(`/auth/check-username?userName=${encodeURIComponent(q)}`)
+            .then(res => { if (!cancelled) setUsernameTaken(res.data?.data?.available === false) })
+            .catch(() => { if (!cancelled) setUsernameTaken(false) })
+            .finally(() => { if (!cancelled) setCheckingUsername(false) })
+
+        return () => { cancelled = true }
+    }, [debouncedUsername])
+
     const handleRegister = (e) => {
         e.preventDefault()
         const form = e.target
@@ -30,19 +61,18 @@ const Register = () => {
             return
         }
 
+        if (usernameTaken) {
+            setError("Username is already taken")
+            return
+        }
+
         registerUser(
             userName,
             email,
             password,
             `https://api.dicebear.com/7.x/initials/svg?seed=${userName}`
         ).then(() => {
-            Swal.fire({
-                position: "center",
-                icon: "success",
-                title: "Successfully Registered",
-                showConfirmButton: false,
-                timer: 1500
-            });
+            toast.success('Successfully Registered');
             navigate("/allBlabs")
         }).catch((error) => {
             setError(error.response?.data?.message || error.message || "Registration failed");
@@ -52,16 +82,27 @@ const Register = () => {
     return (
         <div>
             <div className='flex justify-center items-center pt-16 pb-10 min-h-screen px-4 md:px-0'>
-                <div className='hidden md:flex'>
-                    <Lottie className="w-sm" animationData={lottieRegister} loop={true}></Lottie>
-                </div>
                 <div className="card bg-base-100 w-full max-w-sm md:w-lg shrink-0 shadow-lg">
                     <div className="card-body">
                         <h1 className='text-3xl font-bold text-center'>Please Register</h1>
                         <form onSubmit={handleRegister} className='space-y-3' >
                             <div>
                                 <p className='text-muted-foreground'>Username</p>
-                                <Input required name='userName' type="text" placeholder='Enter Name' />
+                                <Input
+                                    required
+                                    name='userName'
+                                    type="text"
+                                    placeholder='Enter Name'
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className={usernameTaken ? 'border-destructive' : ''}
+                                />
+                                {checkingUsername && !usernameTaken && (
+                                    <p className='mt-1 text-sm text-muted-foreground'>Checking username...</p>
+                                )}
+                                {usernameTaken && (
+                                    <p className='mt-1 text-sm text-destructive'>Username is already taken</p>
+                                )}
                             </div>
                             {/* <div>
                                 <p className='text-muted-foreground'>Phone</p>

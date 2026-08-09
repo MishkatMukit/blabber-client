@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import useAuth from '../../Hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router';
-import Lottie from 'lottie-react';
-import lottieLogin from "../../assets/login.json"
 import { IoEyeOutline } from 'react-icons/io5';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -30,13 +28,7 @@ const Login = () => {
         // console.log(email, password);
         try {
             await logInUser(email, password)
-            Swal.fire({
-                position: "center",
-                icon: "success",
-                title: "SignIn successful",
-                showConfirmButton: false,
-                timer: 1500
-            });
+            toast.success('SignIn successful');
             navigate(location.state?.pathname || "/allBlabs")
         } catch (error) {
             setError(error.response?.data?.message || "Invalid email or password combination")
@@ -47,9 +39,6 @@ const Login = () => {
         <div>
             <div>
                 <div className='flex justify-center items-center py-10 md:py-20 min-h-screen px-4 md:px-0'>
-                    <div className='hidden md:flex'>
-                        <Lottie className='w-sm' animationData={lottieLogin} loop={false}></Lottie>
-                    </div>
                     <div className="card bg-base-100 w-full max-w-sm md:w-lg shrink-0 shadow-lg">
                         <div className="card-body">
                             <h1 className='text-3xl font-medium text-center'>Please Login</h1>
@@ -71,7 +60,6 @@ const Login = () => {
                                 <Button type="submit" size="lg" className="w-full my-3">Login</Button>
                                 <p className='text-center text-base-200 font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/register">Register</Link></p>
                             </form>
-                            <div className="divider">OR</div>
                         </div>
                     </div>
                 </div>

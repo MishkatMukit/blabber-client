@@ -6,7 +6,7 @@ import { FaPen } from "react-icons/fa";
 import { Send } from "lucide-react";
 import { useState } from "react";
 import useAuth from "../../Hooks/useAuth";
-import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 import BlabSkeleton from "../../Components/Shared/Skeleton/BlabSkeleton";
 import MyBlabs from "../../Components/DashboardComponents/MyBlabs";
 import ProfileSkeleton from "../../Components/Shared/Skeleton/ProfileSkeleton";
@@ -52,14 +52,7 @@ const UserDashboard = () => {
             // redirect to chat page with this conversation already selected
             navigate('/chat', { state: { conversation } });
         } catch {
-            Swal.fire({
-                title: "Couldn't start chat",
-                text: "Something went wrong opening a conversation. Please try again.",
-                icon: "error",
-                background: "#111827",
-                color: "white",
-                confirmButtonColor: "#EA580C"
-            });
+            toast.error("Couldn't start chat. Something went wrong opening a conversation. Please try again.");
         }
     };
 
@@ -70,7 +63,7 @@ const UserDashboard = () => {
 
     return (
         <div className="max-w-[95%] md:max-w-3xl mx-auto px-2 md:px-4 pt-20 md:pt-24 pb-10 space-y-6">
-            <Helmet><title>{userData?.userName ? `@${userData.userName} | Blabber` : "Blabber"}</title></Helmet>
+            <Helmet><title>{userData?.userName ? `${userData.userName} | Blabber` : "Blabber"}</title></Helmet>
             <Card className="rounded-2xl p-0">
                 <CardContent className="p-4 md:p-6">
                 {userDataError ? (
@@ -93,7 +86,7 @@ const UserDashboard = () => {
                     </Avatar>
                     <div className="flex-1">
                         <h2 className=" md:text-2xl font-bold tracking-tight">
-                            @{userData?.userName}
+                            {userData?.userName}
                         </h2>
                         <p className="text-xs md:text-sm text-muted-foreground">
                             {userData?.email}
@@ -125,9 +118,10 @@ const UserDashboard = () => {
                         <Button
                             onClick={handleStartChat}
                             size="sm"
+                            className="px-3 sm:px-4"
                         >
                             <Send />
-                            Message
+                            <span className="hidden sm:inline">Message</span>
                         </Button>
                     )}
 

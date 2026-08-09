@@ -25,6 +25,7 @@ const Dashboard = () => {
   const { dbUser, setDbuser } = useAuth()
   const [editedBio, setEditedBio] = useState(dbUser?.bio || "")
   const [editedPhoto, setEditedPhoto] = useState(dbUser?.photo || "")
+  const [editedUserName, setEditedUserName] = useState(dbUser?.userName || "")
   const [photoFile, setPhotoFile] = useState(null)
   const { data: myBlabs = [], isLoading } = useMyBlabsAPI()
   const queryClient = useQueryClient()
@@ -33,6 +34,7 @@ const Dashboard = () => {
   useEffect(() => {
     setEditedBio(dbUser?.bio || "")
     setEditedPhoto(dbUser?.photo || "")
+    setEditedUserName(dbUser?.userName || "")
   }, [dbUser])
 
   const handleEditProfile = async () => {
@@ -44,6 +46,7 @@ const Dashboard = () => {
       }
 
       const payload = {
+        userName: editedUserName,
         bio: editedBio,
         profilePhoto,
       };
@@ -53,6 +56,7 @@ const Dashboard = () => {
       queryClient.invalidateQueries({ queryKey: ["dbUser"] });
       setDbuser((prev) => ({
         ...prev,
+        userName: response.data?.data?.userName ?? prev?.userName,
         bio: response.data?.data?.bio ?? prev?.bio,
         photo: response.data?.data?.photo ?? prev?.photo,
       }));
@@ -98,7 +102,7 @@ const Dashboard = () => {
               </Avatar>
               <div className="flex-1">
                 <h2 className=" md:text-2xl font-bold tracking-tight">
-                  @{dbUser?.userName}
+                  {dbUser?.userName}
                 </h2>
                 <p className="text-xs md:text-sm text-muted-foreground">
                   {dbUser?.email}
@@ -164,6 +168,17 @@ const Dashboard = () => {
                     onChange={(e) => setEditedBio(e.target.value)}
                     placeholder="Update your bio"
                   />
+                  <div className="mt-3 space-y-2">
+                    <Label htmlFor="edited-username">User name</Label>
+                    <Input
+                      id="edited-username"
+                      type="text"
+                      className="mt-2"
+                      value={editedUserName}
+                      onChange={(e) => setEditedUserName(e.target.value)}
+                      placeholder="Update your user name"
+                    />
+                  </div>
                   <div className="mt-3 space-y-2">
                     <Label htmlFor="profile-photo">Profile photo</Label>
                     <Input
