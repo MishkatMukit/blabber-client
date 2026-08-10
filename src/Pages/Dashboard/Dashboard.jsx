@@ -181,21 +181,31 @@ const Dashboard = () => {
                   </div>
                   <div className="mt-3 space-y-2">
                     <Label htmlFor="profile-photo">Profile photo</Label>
-                    <Input
-                      id="profile-photo"
-                      type="file"
-                      accept="image/*"
-                      className="mt-2"
-                      onChange={(e) => {
-                        setPhotoFile(e.target.files?.[0] || null);
-                        if (e.target.files?.[0]) {
-                          setEditedPhoto(URL.createObjectURL(e.target.files[0]));
-                        }
-                      }}
-                    />
-                    {photoFile && (
-                      <p className="text-xs text-muted-foreground mt-1">{photoFile.name}</p>
-                    )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('profile-photo')?.click()}
+                      >
+                        Choose file
+                      </Button>
+                      <Input
+                        id="profile-photo"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          setPhotoFile(e.target.files?.[0] || null);
+                          if (e.target.files?.[0]) {
+                            setEditedPhoto(URL.createObjectURL(e.target.files[0]));
+                          }
+                        }}
+                      />
+                      {photoFile && (
+                        <span className="text-xs text-muted-foreground">{photoFile.name}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
                     <Button onClick={() => setShowEditProfile(false)} variant="ghost" size="sm">Cancel</Button>
