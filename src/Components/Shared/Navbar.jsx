@@ -98,13 +98,14 @@ const Navbar = () => {
                     </ul>
                     <div className="dropdown dropdown-end mx-2">
                         <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                            <Avatar className="size-10">
+                            <Avatar className="size-10 p-1"  >
                                 <AvatarImage
                                     alt="User avatar"
                                     src={
-                                        dbUser
-                                            ? `https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}`
-                                            : "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                                        dbUser? dbUser?.photo ||
+                                        `https://api.dicebear.com/7.x/initials/svg?seed=${dbUser?.userName}` ||
+                                        "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp":`https://res.cloudinary.com/dkgzmwdrz/image/upload/v1786346030/avtaar-blabber_qukpkh.png`
+                                        
                                     }
                                 />
                                 <AvatarFallback>{(dbUser?.userName || "U").slice(0, 2).toUpperCase()}</AvatarFallback>
