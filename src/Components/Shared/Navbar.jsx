@@ -98,7 +98,7 @@ const Navbar = () => {
                     </ul>
                     <div className="dropdown dropdown-end mx-2">
                         <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                            <Avatar className="size-10 p-1"  >
+                            <Avatar className="size-8"  >
                                 <AvatarImage
                                     alt="User avatar"
                                     src={
