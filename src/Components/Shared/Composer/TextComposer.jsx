@@ -10,7 +10,7 @@ import { Textarea } from '../../ui/textarea';
 
 const TextComposer = ({ blabId }) => {
 
-    useAuth()
+    const { user } = useAuth()
     const [text, setText] = useState("");
     const [showEmoji, setShowEmoji] = useState(false)
     const [isPosting, setIsPosting] = useState(false);
@@ -18,6 +18,10 @@ const TextComposer = ({ blabId }) => {
     const queryClient = useQueryClient()
     const axiosSecure = useAxiosSecure()
     const handleAddBlab = async () => {
+        if (!user) {
+            toast("Please login or register to post an echo");
+            return;
+        }
         const echoe = { blabId, content: text };
         setIsPosting(true);
         try {

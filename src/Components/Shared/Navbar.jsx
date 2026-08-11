@@ -6,7 +6,6 @@ import useAuth from '../../Hooks/useAuth';
 import { IoIosAdd, IoMdLogIn } from 'react-icons/io';
 import { FaBars, FaPowerOff, FaRegUserCircle } from 'react-icons/fa';
 import { useQueryClient } from '@tanstack/react-query';
-import logo from '../../assets/logo.png';
 import { toast } from 'react-toastify';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -62,10 +61,21 @@ const Navbar = () => {
             }`}>
             <div className="navbar max-w-[95%] mx-auto bg-white/8 backdrop-blur-2xl   border border-t-0 border-white/20 shadow-lg rounded-sm">
                 <div className="navbar-start">
-                    <Link to="/allBlabs" className="md:hidden">
-                        <img src={logo} alt="Blabber Logo" className="h-8 w-8" />
+                    <Link to="/allBlabs" className="md:hidden" aria-label="Blabber home">
+                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="15" y="12" width="14" height="11" rx="4.5" fill="#9A3412" />
+                            <rect x="3" y="4" width="19" height="16" rx="6" fill="var(--color-primary)" />
+                            <path d="M10 20h7l-3.5 5Z" fill="var(--color-primary)" />
+                        </svg>
                     </Link>
-                    <Link to="/allBlabs" className="hidden  font-semibold md:block md:pl-2 text-xl font-roboto text-primary"><img src={logo} alt="Blabber Logo" className="h-8 w-8 inline" />Blabber</Link>
+                    <Link to="/allBlabs" className="hidden md:flex items-center gap-2 pl-2 text-xl font-levin text-primary">
+                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="15" y="12" width="14" height="11" rx="4.5" fill="#9A3412" />
+                            <rect x="3" y="4" width="19" height="16" rx="6" fill="var(--color-primary)" />
+                            <path d="M10 20h7l-3.5 5Z" fill="var(--color-primary)" />
+                        </svg>
+                        Blabber
+                    </Link>
                 </div>
 
                 <div className="navbar-end flex items-center gap-2">

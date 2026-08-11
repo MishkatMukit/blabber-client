@@ -18,7 +18,14 @@ const Navbar = () => {
                             
                         </ul>
                     </div>
-                    <a className="pl-2 text-xl font-levin text-primary">Blabber</a>
+                    <a className="pl-2 text-xl font-levin text-primary flex items-center gap-2">
+                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="15" y="12" width="14" height="11" rx="4.5" fill="#9A3412" />
+                            <rect x="3" y="4" width="19" height="16" rx="6" fill="var(--color-primary)" />
+                            <path d="M10 20h7l-3.5 5Z" fill="var(--color-primary)" />
+                        </svg>
+                        Blabber
+                    </a>
                 </div>
                 <div className="navbar-center hidden lg:flex ">
                     <ul className="menu menu-horizontal px-1">

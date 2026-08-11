@@ -21,10 +21,14 @@ const EchoeCard = ({ echoe, blabId }) => {
     const [deleting, setDeleting] = useState(false)
     const [editedText, setEditedText] = useState(echoe?.content)
     const [isUpdating, setIsUpdating] = useState(false);
-    const { dbUser } = useAuth()
+    const { user, dbUser } = useAuth()
     const { mutate: applauseEchoe, isPending } = useApplauseEchoe()
     const axiosSecure = useAxiosSecure();
     const handleApplause = () => {
+        if (!user) {
+            toast("Please login or register to give applause");
+            return;
+        }
         applauseEchoe({ echoId: echoe.id, blabId });
     };
     const handleEditEcho = async (id, blabId) => {
