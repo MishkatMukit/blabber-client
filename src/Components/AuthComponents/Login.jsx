@@ -7,9 +7,11 @@ import { FcGoogle } from 'react-icons/fc';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Loader2 } from 'lucide-react';
 
 const Login = () => {
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const { logInUser } = useAuth()
     const [eye, setEye] = useState(false)
     const navigate = useNavigate()
@@ -25,13 +27,15 @@ const Login = () => {
             setError("Email and password are required");
             return;
         }
-        // console.log(email, password);
+        setLoading(true);
         try {
             await logInUser(email, password)
             toast.success('SignIn successful');
             navigate(location.state?.pathname || "/allBlabs")
         } catch (error) {
             setError(error.response?.data?.message || "Invalid email or password combination")
+        } finally {
+            setLoading(false);
         }
 
     }
@@ -55,9 +59,18 @@ const Login = () => {
                                             size={18} className='absolute top-8 right-3 ' />
                                     }
                                 </div>
-                                <p className='text-base-200 text-sm'>{error}</p>
+                                <p className='text-destructive text-sm'>{error}</p>
                                 <Link to="/forgetpassword" className='text-base-200 underline'>Forgot Password?</Link>
-                                <Button type="submit" size="lg" className="w-full my-3">Login</Button>
+                                <Button type="submit" size="lg" className="w-full my-3" disabled={loading}>
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="size-4 animate-spin" />
+                                            Logging in...
+                                        </>
+                                    ) : (
+                                        'Login'
+                                    )}
+                                </Button>
                                 <p className='text-center text-base-200 font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/register">Register</Link></p>
                             </form>
                         </div>

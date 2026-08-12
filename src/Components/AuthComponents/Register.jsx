@@ -9,9 +9,11 @@ import axiosPublic from '../../Hooks/useAxiosPublic';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Loader2 } from 'lucide-react';
 const Register = () => {
     const [eye, setEye] = useState(false)
     const [conEye, setConEye] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [username, setUsername] = useState("")
     const [usernameTaken, setUsernameTaken] = useState(false)
     const [checkingUsername, setCheckingUsername] = useState(false)
@@ -66,6 +68,7 @@ const Register = () => {
             return
         }
 
+        setLoading(true);
         registerUser(
             userName,
             email,
@@ -76,6 +79,8 @@ const Register = () => {
             navigate("/allBlabs")
         }).catch((error) => {
             setError(error.response?.data?.message || error.message || "Registration failed");
+        }).finally(() => {
+            setLoading(false);
         });
 
     }
@@ -132,9 +137,18 @@ const Register = () => {
                                         size={18} className='absolute top-8 right-3 ' />
                                 }
                             </div>
-                            <p className='text-base-200 font-light text-sm'>{error}</p>
+                            <p className='text-destructive font-light text-sm'>{error}</p>
 
-                            <Button type="submit" size="lg" className="w-full my-3">Register</Button>
+                            <Button type="submit" size="lg" className="w-full my-3" disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="size-4 animate-spin" />
+                                        Registering...
+                                    </>
+                                ) : (
+                                    'Register'
+                                )}
+                            </Button>
                             <p className='text-center font-medium'>Don't have an account? <Link className=' font-medium text-primary' to="/login">Login</Link></p>
                         </form>
 
